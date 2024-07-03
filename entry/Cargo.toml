@@ -1,0 +1,13 @@
+[package]
+name = "ppaass-blog-entry"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+ppaass-blog-migration = { path = "../migration" }
+ppaass-blog-domain = { path = "../domain" }
+anyhow = { workspace = true }
+log = { workspace = true }
+chrono = { workspace = true }
+futures = { workspace = true }
