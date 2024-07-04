@@ -1,5 +1,11 @@
 use chrono::{DateTime, Utc};
+use sea_orm::FromJsonQueryResult;
 use sea_orm::prelude::*;
+use serde::{Deserialize, Serialize};
+#[derive(Serialize, Deserialize, FromJsonQueryResult, Clone, Eq, PartialEq, Debug)]
+pub struct AdditionalInfo {
+    pub labels: Vec<String>,
+}
 
 #[derive(Clone, PartialEq, Eq, Debug, DeriveEntityModel)]
 #[sea_orm(table_name = "blog")]
@@ -13,6 +19,7 @@ pub struct Model {
     #[sea_orm(column_type = "Timestamp")]
     pub update_date: DateTime<Utc>,
     pub user_id: u32,
+    pub additional_info: AdditionalInfo,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

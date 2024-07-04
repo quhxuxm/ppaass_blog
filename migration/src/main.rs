@@ -1,5 +1,5 @@
-use sea_orm_migration::prelude::*;
 use anyhow::Result;
+use sea_orm_migration::prelude::*;
 
 #[tokio::main]
 async fn main() -> Result<()> {
