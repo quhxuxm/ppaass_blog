@@ -13,13 +13,13 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     pub id: u32,
     #[sea_orm(unique, indexed)]
-    pub user_name: String,
+    pub username: String,
     #[sea_orm(unique, indexed)]
     pub display_name: String,
     pub password: String,
     #[sea_orm(column_type = "Timestamp")]
     pub register_date: DateTime<Utc>,
-    pub additional_info: AdditionalInfo
+    pub additional_info: AdditionalInfo,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -19,7 +19,7 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(User::UserName)
+                        ColumnDef::new(User::Username)
                             .string()
                             .not_null()
                             .unique_key(),
@@ -32,6 +32,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(User::Password).string().not_null())
                     .col(ColumnDef::new(User::RegisterDate).date_time().not_null())
+                    .col(ColumnDef::new(User::AdditionalInfo).json())
                     .to_owned(),
             )
             .await?;
@@ -52,6 +53,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Blog::CreateDate).date_time().not_null())
                     .col(ColumnDef::new(Blog::UpdateDate).date_time().not_null())
                     .col(ColumnDef::new(Blog::UserId).big_unsigned().not_null())
+                    .col(ColumnDef::new(Blog::AdditionalInfo).json())
                     .to_owned(),
             )
             .await?;
@@ -72,6 +74,7 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(Post::CreateDate).date_time().not_null())
                     .col(ColumnDef::new(Post::UpdateDate).date_time().not_null())
                     .col(ColumnDef::new(Post::BlogId).big_unsigned().not_null())
+                    .col(ColumnDef::new(Post::AdditionalInfo).json())
                     .to_owned(),
             )
             .await?;
@@ -97,10 +100,11 @@ impl MigrationTrait for Migration {
 enum User {
     Table,
     Id,
-    UserName,
+    Username,
     DisplayName,
     Password,
     RegisterDate,
+    AdditionalInfo,
 }
 
 #[derive(DeriveIden)]
@@ -112,6 +116,7 @@ enum Blog {
     CreateDate,
     UpdateDate,
     UserId,
+    AdditionalInfo,
 }
 
 #[derive(DeriveIden)]
@@ -123,4 +128,5 @@ enum Post {
     BlogId,
     CreateDate,
     UpdateDate,
+    AdditionalInfo,
 }

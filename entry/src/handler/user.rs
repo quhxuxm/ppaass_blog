@@ -4,7 +4,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::Json;
 use chrono::Utc;
-use log::error;
+use tracing::error;
 use migration::sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
 };
@@ -18,7 +18,7 @@ pub async fn get(
     State(database): State<Arc<DatabaseConnection>>,
 ) -> Result<GetUserResponseBo, StatusCode> {
     let user_from_db = UserEntity::find()
-        .filter(UserColumn::UserName.eq(&username))
+        .filter(UserColumn::Username.eq(&username))
         .one(database.deref())
         .await
         .map_err(|e| {
@@ -29,7 +29,7 @@ pub async fn get(
         })?
         .ok_or(StatusCode::NOT_FOUND)?;
     Ok(GetUserResponseBo {
-        user_name: user_from_db.user_name,
+        username: user_from_db.username,
         display_name: user_from_db.display_name,
         additional_info: UserAdditionalInfoBo {
             labels: user_from_db.additional_info.labels,
@@ -40,14 +40,14 @@ pub async fn get(
 pub async fn register(
     State(database): State<Arc<DatabaseConnection>>,
     Json(RegisterUserRequestBo {
-        user_name,
+        username,
         labels,
         password,
         display_name,
     }): Json<RegisterUserRequestBo>,
 ) -> Result<Json<RegisterUserResponseBo>, StatusCode> {
     let user_model = UserActiveModel {
-        user_name: Set(user_name.clone()),
+        username: Set(username.clone()),
         display_name: Set(display_name.clone()),
         password: Set(password),
         register_date: Set(Utc::now()),
@@ -61,7 +61,7 @@ pub async fn register(
         StatusCode::INTERNAL_SERVER_ERROR
     })?;
     let response = RegisterUserResponseBo {
-        user_name,
+        username,
         display_name,
         additional_info: UserAdditionalInfoBo { labels },
     };

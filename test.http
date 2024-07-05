@@ -1,0 +1,13 @@
+### GET request to example server
+POST localhost:9090/user/register
+Content-Type: application/json
+
+{
+  "username": "quhao1",
+  "password": "password",
+  "display_name": "Qu Hao 1",
+  "labels": ["LA", "LB", "LC"]
+}
+
+
+###
