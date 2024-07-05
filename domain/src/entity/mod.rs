@@ -2,6 +2,7 @@ pub use blog::ActiveModel as BlogActiveModel;
 pub use blog::Column as BlogColumn;
 pub use blog::Entity as BlogEntity;
 pub use blog::Model as BlogModel;
+pub use blog::AdditionalInfo as BlogAdditionalInfo;
 pub use post::ActiveModel as PostActiveModel;
 pub use post::Column as PostColumn;
 pub use post::Entity as PostEntity;

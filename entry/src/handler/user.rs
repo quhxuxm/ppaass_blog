@@ -1,8 +1,8 @@
 use std::ops::Deref;
 use std::sync::Arc;
+use axum::{debug_handler, Json};
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use axum::Json;
 use chrono::Utc;
 use tracing::error;
 use migration::sea_orm::{
@@ -13,10 +13,19 @@ use ppaass_blog_domain::entity::{UserActiveModel, UserAdditionalInfo, UserColumn
 use crate::bo::user::{
     GetUserResponseBo, RegisterUserRequestBo, RegisterUserResponseBo, UserAdditionalInfoBo,
 };
-pub async fn get(
+
+#[debug_handler]
+pub async fn auth_user(
     Path(username): Path<String>,
     State(database): State<Arc<DatabaseConnection>>,
-) -> Result<GetUserResponseBo, StatusCode> {
+) -> Result<Json<GetUserResponseBo>, StatusCode> {
+    todo!()
+}
+#[debug_handler]
+pub async fn get_user(
+    Path(username): Path<String>,
+    State(database): State<Arc<DatabaseConnection>>,
+) -> Result<Json<GetUserResponseBo>, StatusCode> {
     let user_from_db = UserEntity::find()
         .filter(UserColumn::Username.eq(&username))
         .one(database.deref())
@@ -28,16 +37,17 @@ pub async fn get(
             StatusCode::INTERNAL_SERVER_ERROR
         })?
         .ok_or(StatusCode::NOT_FOUND)?;
-    Ok(GetUserResponseBo {
+    Ok(Json(GetUserResponseBo {
         username: user_from_db.username,
         display_name: user_from_db.display_name,
         additional_info: UserAdditionalInfoBo {
             labels: user_from_db.additional_info.labels,
         },
-    })
+    }))
 }
 
-pub async fn register(
+#[debug_handler]
+pub async fn register_user(
     State(database): State<Arc<DatabaseConnection>>,
     Json(RegisterUserRequestBo {
         username,

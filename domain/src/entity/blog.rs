@@ -12,6 +12,8 @@ pub struct AdditionalInfo {
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     pub id: u32,
+    #[sea_orm(unique, indexed)]
+    pub token: String,
     pub title: String,
     pub summary: String,
     #[sea_orm(column_type = "Timestamp")]

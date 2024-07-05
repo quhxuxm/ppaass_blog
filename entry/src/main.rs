@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use anyhow::{Ok, Result};
 use axum::Router;
-use axum::routing::post;
+use axum::routing::{get, post};
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing::level_filters::LevelFilter;
@@ -37,7 +37,7 @@ async fn init_database_connection(
     Ok(Arc::new(database))
 }
 
-pub fn init_tracing_subscriber(
+fn init_tracing_subscriber(
     log_config: &LogConfig,
 ) -> Result<(
     Subscriber<DefaultFields, Format<Full, ChronoUtc>, LevelFilter, NonBlocking>,
@@ -61,6 +61,13 @@ pub fn init_tracing_subscriber(
     Ok((subscriber, trace_appender_guard))
 }
 
+fn init_router() -> Router<Arc<DatabaseConnection>> {
+    Router::new()
+        .route("/user/register", post(handler::user::register_user))
+        .route("/user/:username", get(handler::user::get_user))
+        .route("/blog/create", post(handler::blog::create_blog))
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let config_content = read_to_string(CONFIG_FILE_PATH)?;
@@ -70,10 +77,7 @@ async fn main() -> Result<()> {
     info!("Initialize log success.");
     let database = init_database_connection(&config.database()).await?;
     info!("Initialize database success.");
-    let router = Router::new()
-        .route("/user/register", post(handler::user::register))
-        // .route("/user/:username", get(handler::user::get))
-        .with_state(database);
+    let router = init_router().with_state(database);
     info!("Initialize http server route success.");
     let tcp_listener = TcpListener::bind("0.0.0.0:9090").await?;
     axum::serve(tcp_listener, router).await?;
