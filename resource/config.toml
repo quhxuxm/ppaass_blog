@@ -1,3 +1,6 @@
+[server]
+bind_address = "0.0.0.0:9090"
+
 [database]
 database_type = "MySQL"
 host = "localhost"
@@ -10,5 +13,8 @@ min_connections = 32
 connection_acquire_timeout = 1
 [log]
 file_name_prefix = "ppaass-blog"
-max_log_level = "INFO"
+max_log_level = "DEBUG"
 log_folder = "log"
+[jwt]
+secret = "quhao123"
+expire_duration_seconds = 3600

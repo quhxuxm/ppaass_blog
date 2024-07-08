@@ -7,6 +7,7 @@ pub use post::ActiveModel as PostActiveModel;
 pub use post::Column as PostColumn;
 pub use post::Entity as PostEntity;
 pub use post::Model as PostModel;
+pub use post::AdditionalInfo as PostAdditionalInfo;
 pub use user::ActiveModel as UserActiveModel;
 pub use user::Column as UserColumn;
 pub use user::Entity as UserEntity;

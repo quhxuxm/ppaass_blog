@@ -1,9 +1,9 @@
 use std::fs::read_to_string;
 use std::path::Path;
 use std::str::FromStr;
-use std::sync::Arc;
 use std::time::Duration;
 use anyhow::{Ok, Result};
+use axum::middleware::{from_extractor_with_state, from_fn_with_state};
 use axum::Router;
 use axum::routing::{get, post};
 use tokio::net::TcpListener;
@@ -16,14 +16,17 @@ use tracing_subscriber::fmt::time::ChronoUtc;
 use migration::{Migrator, MigratorTrait};
 use migration::sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use crate::config::{Config, DatabaseConfig, LogConfig};
+use crate::extractor::auth_token::UserAuthToken;
+use crate::state::ApplicationState;
 mod bo;
 mod config;
-mod handler;
+mod error;
 
+mod extractor;
+mod handler;
+mod state;
 const CONFIG_FILE_PATH: &str = "resource/config.toml";
-async fn init_database_connection(
-    database_config: &DatabaseConfig,
-) -> Result<Arc<DatabaseConnection>> {
+async fn init_database_connection(database_config: &DatabaseConfig) -> Result<DatabaseConnection> {
     let mut database_connect_options =
         ConnectOptions::new(database_config.generate_url()?).to_owned();
     database_connect_options.max_connections(database_config.max_connections());
@@ -34,7 +37,7 @@ async fn init_database_connection(
     let database = Database::connect(database_connect_options).await?;
     // Migrator::down(&database, None).await?;
     Migrator::up(&database, None).await?;
-    Ok(Arc::new(database))
+    Ok(database)
 }
 
 fn init_tracing_subscriber(
@@ -61,25 +64,32 @@ fn init_tracing_subscriber(
     Ok((subscriber, trace_appender_guard))
 }
 
-fn init_router() -> Router<Arc<DatabaseConnection>> {
+fn init_router(database: DatabaseConnection, config: Config) -> Router {
+    let state = ApplicationState::new(database, config);
     Router::new()
+        .route("/blog/create", post(handler::blog::create_blog))
+        .route("/post/create/:blog_token", post(handler::post::create_post))
+        .layer(from_extractor_with_state::<UserAuthToken, ApplicationState>(state.clone()))
         .route("/user/register", post(handler::user::register_user))
         .route("/user/:username", get(handler::user::get_user))
-        .route("/blog/create", post(handler::blog::create_blog))
+        .route("/user/auth", post(handler::user::auth_user))
+        .route("/blog/:blog_token", get(handler::blog::get_blog))
+        .with_state(state)
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let config_content = read_to_string(CONFIG_FILE_PATH)?;
     let config = toml::from_str::<Config>(&config_content)?;
+    let bind_address = *config.server().bind_address();
     let (subscriber, _tracing_guard) = init_tracing_subscriber(config.log())?;
     tracing::subscriber::set_global_default(subscriber)?;
     info!("Initialize log success.");
     let database = init_database_connection(&config.database()).await?;
     info!("Initialize database success.");
-    let router = init_router().with_state(database);
+    let router = init_router(database, config);
     info!("Initialize http server route success.");
-    let tcp_listener = TcpListener::bind("0.0.0.0:9090").await?;
+    let tcp_listener = TcpListener::bind(bind_address).await?;
     axum::serve(tcp_listener, router).await?;
     Ok(())
 }

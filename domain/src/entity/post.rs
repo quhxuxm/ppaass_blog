@@ -12,6 +12,8 @@ pub struct AdditionalInfo {
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
     pub id: u32,
+    #[sea_orm(unique, indexed)]
+    pub token: String,
     pub title: String,
     #[sea_orm(nullable)]
     pub content: Option<String>,
@@ -20,7 +22,7 @@ pub struct Model {
     pub create_date: DateTime<Utc>,
     #[sea_orm(column_type = "Timestamp")]
     pub update_date: DateTime<Utc>,
-    pub additional_info: AdditionalInfo
+    pub additional_info: AdditionalInfo,
 }
 
 #[derive(DeriveRelation, Debug, Clone, Copy, EnumIter)]

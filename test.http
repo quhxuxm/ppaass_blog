@@ -2,9 +2,9 @@ POST localhost:9090/user/register
 Content-Type: application/json
 
 {
-  "username": "quhao2",
+  "username": "quhao1",
   "password": "password",
-  "display_name": "Qu Hao 2",
+  "display_name": "Qu Hao 1",
   "labels": [
     "LA",
     "LB",
@@ -13,4 +13,46 @@ Content-Type: application/json
 }
 
 ###
-GET http://localhost:9090/user/quhao1
+POST http://localhost:9090/user/auth
+Content-Type: application/json
+
+{
+  "username": "quhao1",
+  "password": "password"
+}
+
+###
+POST http://localhost:9090/blog/create
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6ImVhMWE1MDNiLWI5YTMtNGZiNy05YzgzLTgwMTJkZWViNjMzYSJ9.eyJ1c2VybmFtZSI6InF1aGFvMSIsImV4cCI6MTcyMDQyODM3NjY5NCwiYWRkaXRpb25hbF9pbmZvIjp7ImxhYmVscyI6WyJMQSIsIkxCIiwiTEMiXX19.MREqFJCYGCyJau4QfZlOxP0SqPHONGTNdQUeoqp98N574VgNzU4su03uIb99oLJwSxv7SsveveR9Yr0KmtEIcQ
+Content-Type: application/json
+
+{
+  "title": "Title 5",
+  "summary": "Summary 5",
+  "additional_info": {
+    "labels": [
+      "BL1",
+      "BL2"
+    ]
+  }
+}
+
+###
+GET http://localhost:9090/blog/71f4b37b-e029-49a8-b58e-4408ecb0bf35
+Content-Type: application/json
+
+###
+POST http://localhost:9090/post/create/ed79bfa3-a38b-4441-9f52-1f1b4adb9271
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6ImVhMWE1MDNiLWI5YTMtNGZiNy05YzgzLTgwMTJkZWViNjMzYSJ9.eyJ1c2VybmFtZSI6InF1aGFvMSIsImV4cCI6MTcyMDQyODM3NjY5NCwiYWRkaXRpb25hbF9pbmZvIjp7ImxhYmVscyI6WyJMQSIsIkxCIiwiTEMiXX19.MREqFJCYGCyJau4QfZlOxP0SqPHONGTNdQUeoqp98N574VgNzU4su03uIb99oLJwSxv7SsveveR9Yr0KmtEIcQ
+Content-Type: application/json
+
+{
+  "title": "Title 1",
+  "content": "Summary 1",
+  "additional_info": {
+    "labels": [
+      "PL1",
+      "PL2"
+    ]
+  }
+}

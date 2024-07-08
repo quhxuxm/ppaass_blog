@@ -1,3 +1,4 @@
+use std::net::SocketAddr;
 use std::path::PathBuf;
 use anyhow::anyhow;
 use anyhow::Result;
@@ -149,9 +150,38 @@ impl LogConfig {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct JwtConfig {
+    secret: String,
+    expire_duration_seconds: u64
+}
+
+impl JwtConfig{
+    pub fn secret(&self)->&str{
+        &self.secret
+    }
+    
+    pub fn expire_duration_seconds(&self)->u64{
+        self.expire_duration_seconds
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ServerConfig{
+    bind_address: SocketAddr
+}
+
+impl ServerConfig{
+    pub fn bind_address(&self)->&SocketAddr{
+        &self.bind_address
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Config {
     database: DatabaseConfig,
     log: LogConfig,
+    jwt: JwtConfig,
+    server:ServerConfig
 }
 
 impl Config {
@@ -161,5 +191,13 @@ impl Config {
 
     pub fn log(&self) -> &LogConfig {
         &self.log
+    }
+    
+    pub fn jwt(&self)->&JwtConfig{
+        &self.jwt
+    }
+    
+    pub fn server(&self)->&ServerConfig{
+        &self.server
     }
 }

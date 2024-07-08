@@ -14,9 +14,6 @@ pub struct CreateBlogRequestBo {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CreateBlogResponseBo {
     pub token: String,
-    pub title: String,
-    pub summary: String,
-    pub additional_info: BlogAdditionalInfoBo,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

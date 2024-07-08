@@ -18,5 +18,8 @@ derive_more = { workspace = true }
 tracing = { workspace = true }
 tracing-appender = { workspace = true }
 tracing-subscriber = { workspace = true }
+tower = { workspace = true }
 uuid = { workspace = true }
-tower-sessions = { workspace = true }
+jsonwebtoken = { workspace = true }
+async-trait = { workspace = true }
+thiserror = { workspace = true }

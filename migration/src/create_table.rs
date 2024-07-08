@@ -71,6 +71,7 @@ impl MigrationTrait for Migration {
                             .auto_increment(),
                     )
                     .col(ColumnDef::new(Post::Title).string().not_null())
+                    .col(ColumnDef::new(Post::Token).string().not_null().unique_key())
                     .col(ColumnDef::new(Post::Content).string())
                     .col(ColumnDef::new(Post::CreateDate).date_time().not_null())
                     .col(ColumnDef::new(Post::UpdateDate).date_time().not_null())
@@ -125,6 +126,7 @@ enum Blog {
 enum Post {
     Table,
     Id,
+    Token,
     Title,
     Content,
     BlogId,
