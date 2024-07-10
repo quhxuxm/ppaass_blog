@@ -1,20 +1,20 @@
-use crate::dao::PageDto;
-use crate::dto::blog::{BlogDto, CreateBlogDto, UpdateBlogDto};
-use crate::error::DaoError;
 use chrono::Utc;
-use migration::sea_orm::ActiveValue::Set;
+use sea_orm::{ConnectionTrait, PaginatorTrait, QuerySelect, RelationTrait};
+use uuid::Uuid;
+use migration::JoinType;
 use migration::sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
     TransactionTrait, TryIntoModel,
 };
-use migration::JoinType;
+use migration::sea_orm::ActiveValue::Set;
 use ppaass_blog_domain::entity::{
-    BlogActiveModel, BlogAdditionalInfo, BlogColumn, BlogEntity, BlogRelation, UserColumn,
+    BlogActiveModel,  BlogColumn, BlogEntity, BlogRelation, UserColumn,
     UserEntity,
 };
-use sea_orm::{PaginatorTrait, QuerySelect, RelationTrait};
-use uuid::Uuid;
-pub async fn get_blog(database: &DatabaseConnection, token: &str) -> Result<BlogDto, DaoError> {
+use crate::dao::PageDto;
+use crate::dto::blog::{BlogDto, CreateBlogDto, UpdateBlogDto};
+use crate::error::DaoError;
+pub async fn get_blog<C: ConnectionTrait>(database: &C, token: &str) -> Result<BlogDto, DaoError> {
     let (blog_from_db, owner_from_db) = BlogEntity::find()
         .filter(BlogColumn::Token.eq(token))
         .find_also_related(UserEntity)
@@ -34,8 +34,8 @@ pub async fn get_blog(database: &DatabaseConnection, token: &str) -> Result<Blog
     })
 }
 
-pub async fn create_blog(
-    database: &DatabaseConnection,
+pub async fn create_blog<C: ConnectionTrait>(
+    database: &C,
     CreateBlogDto {
         title,
         summary,
@@ -73,8 +73,8 @@ pub async fn create_blog(
     })
 }
 
-pub async fn update_blog(
-    database: &DatabaseConnection,
+pub async fn update_blog<C: ConnectionTrait>(
+    database: &C,
     UpdateBlogDto {
         token,
         title,
@@ -116,8 +116,8 @@ pub async fn update_blog(
     })
 }
 
-pub async fn find_all_blogs_by_username(
-    database: &DatabaseConnection,
+pub async fn find_all_blogs_by_username<C: ConnectionTrait>(
+    database: &C,
     username: String,
     page_index: u64,
     page_size: u64,

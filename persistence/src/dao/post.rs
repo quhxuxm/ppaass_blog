@@ -1,20 +1,21 @@
-use crate::dao::PageDto;
-use crate::dto::post::{CreatePostDto, PostDto, UpdatePostDto};
-use crate::error::DaoError;
 use chrono::Utc;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait,
+    IntoActiveModel, PaginatorTrait, QueryFilter, QuerySelect, RelationTrait, TransactionTrait,
+    TryIntoModel,
+};
+use sea_orm::ActiveValue::Set;
+use uuid::Uuid;
 use migration::JoinType;
 use ppaass_blog_domain::entity::{
     BlogColumn, BlogEntity, PostActiveModel, PostAdditionalInfo, PostColumn, PostEntity,
     PostRelation,
 };
-use sea_orm::ActiveValue::Set;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel,
-    PaginatorTrait, QueryFilter, QuerySelect, RelationTrait, TransactionTrait, TryIntoModel,
-};
-use uuid::Uuid;
-pub async fn create_post(
-    database: &DatabaseConnection,
+use crate::dao::PageDto;
+use crate::dto::post::{CreatePostDto, PostDto, UpdatePostDto};
+use crate::error::DaoError;
+pub async fn create_post<C: ConnectionTrait+TransactionTrait>(
+    database: &C,
     CreatePostDto {
         title,
         content,
@@ -34,7 +35,6 @@ pub async fn create_post(
         blog_id: Set(blog_from_db.id),
         create_date: Set(Utc::now()),
         update_date: Set(Utc::now()),
-        additional_info: Set(PostAdditionalInfo { labels }),
         ..Default::default()
     };
     let post_from_db = database
@@ -52,8 +52,8 @@ pub async fn create_post(
     })
 }
 
-pub async fn update_post(
-    database: &DatabaseConnection,
+pub async fn update_post<C: ConnectionTrait+TransactionTrait>(
+    database: &C,
     UpdatePostDto {
         title,
         content,
@@ -102,8 +102,8 @@ pub async fn update_post(
     })
 }
 
-pub async fn find_all_posts_by_blog_token(
-    database: &DatabaseConnection,
+pub async fn find_all_posts_by_blog_token<C: ConnectionTrait + TransactionTrait>(
+    database: &C,
     blog_token: String,
     page_index: u64,
     page_size: u64,

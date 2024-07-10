@@ -1,14 +1,9 @@
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct UserAdditionalInfoBo {
-    pub labels: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct RegisterUserResponseBo {
     pub username: String,
     pub display_name: String,
-    pub additional_info: UserAdditionalInfoBo,
+    pub labels: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -23,7 +18,7 @@ pub struct RegisterUserRequestBo {
 pub struct GetUserResponseBo {
     pub username: String,
     pub display_name: String,
-    pub additional_info: UserAdditionalInfoBo,
+    pub labels: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -36,7 +31,7 @@ pub struct AuthUserRequestBo {
 pub struct AuthUserResponseBo {
     pub username: String,
     pub display_name: String,
-    pub additional_info: UserAdditionalInfoBo,
+    pub labels: Vec<String>,
     pub auth_token: String,
 }
 
@@ -44,5 +39,5 @@ pub struct AuthUserResponseBo {
 pub struct UserAuthTokenBo {
     pub username: String,
     pub exp: i64,
-    pub additional_info: UserAdditionalInfoBo,
+    pub labels: Vec<String>,
 }
