@@ -1,3 +1,4 @@
+use crate::dao::PageDto;
 use crate::dto::post::{CreatePostDto, PostDto, UpdatePostDto};
 use crate::error::DaoError;
 use chrono::Utc;
@@ -106,13 +107,14 @@ pub async fn find_all_posts_by_blog_token(
     blog_token: String,
     page_index: u64,
     page_size: u64,
-) -> Result<Vec<PostDto>, DaoError> {
+) -> Result<PageDto<PostDto>, DaoError> {
     let post_page = PostEntity::find()
         .join(JoinType::InnerJoin, PostRelation::Blog.def())
         .filter(BlogColumn::Token.eq(&blog_token))
         .paginate(database, page_size);
-    let post_page = post_page.fetch_page(page_index).await?;
-    Ok(post_page
+    let page_number = post_page.num_pages().await?;
+    let posts = post_page.fetch_page(page_index).await?;
+    let posts = posts
         .into_iter()
         .map(|post| PostDto {
             token: post.token,
@@ -123,5 +125,11 @@ pub async fn find_all_posts_by_blog_token(
             create_date: post.create_date,
             update_date: post.update_date,
         })
-        .collect())
+        .collect::<Vec<PostDto>>();
+    Ok(PageDto {
+        items: posts,
+        page_size,
+        page_number,
+        page_index,
+    })
 }

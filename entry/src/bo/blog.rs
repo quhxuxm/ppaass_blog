@@ -1,4 +1,3 @@
-use crate::bo::Pagination;
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct BlogAdditionalInfoBo {
@@ -24,10 +23,4 @@ pub struct BlogDetailBo {
     pub summary: String,
     pub additional_info: BlogAdditionalInfoBo,
     pub owner_username: String,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ListBlogsResponseBo {
-    pub blogs: Vec<BlogDetailBo>,
-    pub pagination: Pagination,
 }

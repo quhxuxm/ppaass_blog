@@ -1,8 +1,7 @@
 use crate::bo::post::{
-    CreatePostRequestBo, CreatePostResponseBo, ListPostsResponseBo, PostAdditionalInfoBo,
-    PostDetailBo,
+    CreatePostRequestBo, CreatePostResponseBo, PostAdditionalInfoBo, PostDetailBo,
 };
-use crate::bo::Pagination;
+use crate::bo::{PaginationRequestBo, PaginationResponseBo};
 use crate::error::EntryError;
 use crate::extractor::auth_token::UserAuthToken;
 use crate::state::ApplicationState;
@@ -46,17 +45,18 @@ pub async fn create_post(
 #[debug_handler]
 pub async fn list_posts(
     Path(blog_token): Path<String>,
-    Query(Pagination {
+    Query(PaginationRequestBo {
         page_index,
         page_size,
-    }): Query<Pagination>,
+    }): Query<PaginationRequestBo>,
     State(state): State<ApplicationState>,
-) -> Result<Json<ListPostsResponseBo>, EntryError> {
+) -> Result<Json<PaginationResponseBo<PostDetailBo>>, EntryError> {
     let page_index = page_index.unwrap_or(0u64);
     let page_size = page_size.unwrap_or(u64::MAX);
-    let posts =
+    let post_page =
         find_all_posts_by_blog_token(state.database(), blog_token, page_index, page_size).await?;
-    let posts = posts
+    let posts = post_page
+        .items
         .into_iter()
         .map(|post| PostDetailBo {
             token: post.token,
@@ -68,11 +68,10 @@ pub async fn list_posts(
             blog_token: post.blog_token,
         })
         .collect();
-    Ok(Json(ListPostsResponseBo {
-        posts,
-        pagination: Pagination {
-            page_index: Some(page_index),
-            page_size: Some(page_size),
-        },
+    Ok(Json(PaginationResponseBo {
+        items: posts,
+        page_number: post_page.page_number,
+        page_index: post_page.page_index,
+        page_size: post_page.page_size,
     }))
 }

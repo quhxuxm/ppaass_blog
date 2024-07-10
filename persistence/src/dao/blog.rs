@@ -1,3 +1,4 @@
+use crate::dao::PageDto;
 use crate::dto::blog::{BlogDto, CreateBlogDto, UpdateBlogDto};
 use crate::error::DaoError;
 use chrono::Utc;
@@ -120,13 +121,14 @@ pub async fn find_all_blogs_by_username(
     username: String,
     page_index: u64,
     page_size: u64,
-) -> Result<Vec<BlogDto>, DaoError> {
+) -> Result<PageDto<BlogDto>, DaoError> {
     let blogs_page = BlogEntity::find()
         .join(JoinType::InnerJoin, BlogRelation::User.def())
         .filter(UserColumn::Username.eq(&username))
         .paginate(database, page_size);
+    let page_number = blogs_page.num_pages().await?;
     let blogs = blogs_page.fetch_page(page_index).await?;
-    Ok(blogs
+    let blogs = blogs
         .into_iter()
         .map(move |blog| BlogDto {
             token: blog.token,
@@ -137,5 +139,11 @@ pub async fn find_all_blogs_by_username(
             update_date: blog.update_date,
             owner_username: username.clone(),
         })
-        .collect())
+        .collect::<Vec<BlogDto>>();
+    Ok(PageDto {
+        items: blogs,
+        page_index,
+        page_size,
+        page_number,
+    })
 }
