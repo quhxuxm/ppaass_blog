@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
-use sea_orm::FromJsonQueryResult;
 use sea_orm::prelude::*;
+use sea_orm::FromJsonQueryResult;
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, FromJsonQueryResult, Clone, Eq, PartialEq, Debug)]
 pub struct AdditionalInfo {
@@ -15,8 +15,7 @@ pub struct Model {
     #[sea_orm(unique, indexed)]
     pub token: String,
     pub title: String,
-    #[sea_orm(nullable)]
-    pub content: Option<String>,
+    pub content: String,
     pub blog_id: u32,
     #[sea_orm(column_type = "Timestamp")]
     pub create_date: DateTime<Utc>,

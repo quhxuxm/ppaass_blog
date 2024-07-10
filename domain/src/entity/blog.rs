@@ -1,6 +1,6 @@
 use chrono::{DateTime, Utc};
-use sea_orm::FromJsonQueryResult;
 use sea_orm::prelude::*;
+use sea_orm::FromJsonQueryResult;
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, FromJsonQueryResult, Clone, Eq, PartialEq, Debug)]
 pub struct AdditionalInfo {

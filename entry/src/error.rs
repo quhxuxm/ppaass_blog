@@ -1,9 +1,9 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use jsonwebtoken::errors::Error as JwtError;
+use ppaass_blog_persistence::error::DaoError;
 use thiserror::Error;
 use tracing::error;
-use migration::DbErr;
 #[derive(Error, Debug)]
 pub enum UserAuthTokenError {
     #[error("Authentication token not exist")]
@@ -46,12 +46,14 @@ pub enum EntryError {
     UserAuthToken(#[from] UserAuthTokenError),
     #[error("Can not find user by username [{0}]")]
     UserNotFoundByUsername(String),
+    #[error("User password not match, username: [{0}]")]
+    UserPasswordNotMatch(String),
     #[error("User exist by username [{0}]")]
     UserExistByUsername(String),
     #[error("Can not find blog by token [{0}]")]
     BlogNotFoundByToken(String),
-    #[error("Database error happen: {0:?}")]
-    DatabaseError(#[from] DbErr),
+    #[error("Dao error happen: {0:?}")]
+    Dao(#[from] DaoError),
 }
 
 impl IntoResponse for EntryError {
@@ -70,13 +72,17 @@ impl IntoResponse for EntryError {
                 )
                     .into_response()
             }
+            EntryError::UserPasswordNotMatch(username) => {
+                error!("User password not match, username: [{username}]");
+                (StatusCode::UNAUTHORIZED, "User password not match.").into_response()
+            }
             EntryError::BlogNotFoundByToken(token) => {
                 error!("Can not find blog by token: [{token}]");
                 (StatusCode::NOT_FOUND, "Can not find blog by token.").into_response()
             }
-            EntryError::DatabaseError(e) => {
-                error!("Database error happen: {e:?}");
-                (StatusCode::INTERNAL_SERVER_ERROR, "Database error happen.").into_response()
+            EntryError::Dao(e) => {
+                error!("Dao error happen: {e:?}");
+                (StatusCode::INTERNAL_SERVER_ERROR, "Dao error happen.").into_response()
             }
         }
     }

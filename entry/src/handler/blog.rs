@@ -1,15 +1,15 @@
 use axum::{debug_handler, Json};
-use axum::extract::{Path, State};
-use chrono::Utc;
-use uuid::Uuid;
-use migration::sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
-use migration::sea_orm::ActiveValue::Set;
-use ppaass_blog_domain::entity::{
-    BlogActiveModel, BlogAdditionalInfo, BlogColumn, BlogEntity, UserColumn, UserEntity,
+use axum::extract::{Path, Query, State};
+use ppaass_blog_persistence::dao::blog::{
+    create_blog as dao_create_blog, find_all_blogs_by_username,
 };
+use ppaass_blog_persistence::dao::blog::get_blog as dao_get_blog_detail;
+use ppaass_blog_persistence::dto::blog::CreateBlogDto;
 use crate::bo::blog::{
-    BlogAdditionalInfoBo, CreateBlogRequestBo, CreateBlogResponseBo, GetBlogResponseBo,
+    BlogAdditionalInfoBo, BlogDetailBo, CreateBlogRequestBo, CreateBlogResponseBo,
+    ListBlogsResponseBo,
 };
+use crate::bo::Pagination;
 use crate::error::EntryError;
 use crate::extractor::auth_token::UserAuthToken;
 use crate::state::ApplicationState;
@@ -23,47 +23,68 @@ pub async fn create_blog(
         additional_info,
     }): Json<CreateBlogRequestBo>,
 ) -> Result<Json<CreateBlogResponseBo>, EntryError> {
-    let user_from_db = UserEntity::find()
-        .filter(UserColumn::Username.eq(&user_auth_token.username))
-        .one(state.database())
-        .await?
-        .ok_or(EntryError::UserNotFoundByUsername(
-            user_auth_token.username.clone(),
-        ))?;
-
-    let blog = BlogActiveModel {
-        title: Set(title),
-        token: Set(Uuid::new_v4().to_string()),
-        summary: Set(summary),
-        user_id: Set(user_from_db.id),
-        additional_info: Set(BlogAdditionalInfo {
+    let blog_from_db = dao_create_blog(
+        state.database(),
+        CreateBlogDto {
+            title,
+            summary,
+            username: user_auth_token.username,
             labels: additional_info.labels,
-        }),
-        create_date: Set(Utc::now()),
-        update_date: Set(Utc::now()),
-        ..Default::default()
-    };
-    let blog_from_db = blog.insert(state.database()).await?;
+        },
+    )
+    .await?;
     Ok(Json(CreateBlogResponseBo {
         token: blog_from_db.token,
     }))
 }
 
-pub async fn get_blog(
+#[debug_handler]
+pub async fn get_blog_detail(
     Path(blog_token): Path<String>,
     State(state): State<ApplicationState>,
-) -> Result<Json<GetBlogResponseBo>, EntryError> {
-    let blog_from_db = BlogEntity::find()
-        .filter(BlogColumn::Token.eq(&blog_token))
-        .one(state.database())
-        .await?
-        .ok_or(EntryError::BlogNotFoundByToken(blog_token.clone()))?;
-    Ok(Json(GetBlogResponseBo {
-        token: blog_token,
-        title: blog_from_db.title,
-        summary: blog_from_db.summary,
+) -> Result<Json<BlogDetailBo>, EntryError> {
+    let blog_dto = dao_get_blog_detail(state.database(), &blog_token).await?;
+    Ok(Json(BlogDetailBo {
+        token: blog_dto.token,
+        title: blog_dto.title,
+        summary: blog_dto.summary,
         additional_info: BlogAdditionalInfoBo {
-            labels: blog_from_db.additional_info.labels,
+            labels: blog_dto.labels,
+        },
+        owner_username: blog_dto.owner_username,
+    }))
+}
+
+#[debug_handler]
+pub async fn list_blogs(
+    Path(username): Path<String>,
+    Query(Pagination {
+        page_index,
+        page_size,
+    }): Query<Pagination>,
+    State(state): State<ApplicationState>,
+) -> Result<Json<ListBlogsResponseBo>, EntryError> {
+    let page_index = page_index.unwrap_or(0u64);
+    let page_size = page_size.unwrap_or(u64::MAX);
+    let blogs =
+        find_all_blogs_by_username(state.database(), username, page_index, page_size).await?;
+    let blogs = blogs
+        .into_iter()
+        .map(|blog| BlogDetailBo {
+            token: blog.token,
+            title: blog.title,
+            summary: blog.summary,
+            additional_info: BlogAdditionalInfoBo {
+                labels: blog.labels,
+            },
+            owner_username: blog.owner_username,
+        })
+        .collect();
+    Ok(Json(ListBlogsResponseBo {
+        blogs,
+        pagination: Pagination {
+            page_index: Some(page_index),
+            page_size: Some(page_size),
         },
     }))
 }

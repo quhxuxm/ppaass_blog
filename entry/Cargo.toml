@@ -5,8 +5,7 @@ edition = "2021"
 
 [dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
-ppaass-blog-migration = { path = "../migration" }
-ppaass-blog-domain = { path = "../domain" }
+ppaass-blog-persistence = { path = "../persistence" }
 anyhow = { workspace = true }
 chrono = { workspace = true }
 futures = { workspace = true }

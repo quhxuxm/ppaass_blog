@@ -1,11 +1,11 @@
+use crate::bo::user::UserAuthTokenBo;
+use crate::error::UserAuthTokenError;
+use crate::state::ApplicationState;
 use axum::extract::FromRequestParts;
 use axum::http;
 use axum::http::request::Parts;
-use jsonwebtoken::{Algorithm, decode, DecodingKey, Validation};
+use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use tracing::{debug, error};
-use crate::bo::user::UserAuthTokenBo;
-use crate::error::{UserAuthTokenError};
-use crate::state::ApplicationState;
 pub struct UserAuthToken(pub UserAuthTokenBo);
 
 #[async_trait::async_trait]

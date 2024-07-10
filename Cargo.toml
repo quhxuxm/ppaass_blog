@@ -1,5 +1,5 @@
 [workspace]
-members = ["domain", "migration", "entry"]
+members = ["domain", "migration", "entry", "persistence"]
 resolver = "2"
 
 [workspace.dependencies]

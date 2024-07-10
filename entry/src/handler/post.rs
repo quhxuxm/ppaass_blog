@@ -1,20 +1,21 @@
-use axum::extract::{Path, State};
-use axum::Json;
-use chrono::Utc;
-use uuid::Uuid;
-use migration::sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
-use migration::sea_orm::ActiveValue::Set;
-use ppaass_blog_domain::entity::{
-    BlogColumn, BlogEntity, PostActiveModel, PostAdditionalInfo, UserColumn, UserEntity,
+use axum::{debug_handler, Json};
+use axum::extract::{Path, Query, State};
+use ppaass_blog_persistence::dao::post::{
+    create_post as dao_create_post, find_all_posts_by_blog_token,
 };
-use crate::bo::post::{CreatePostRequestBo, CreatePostResponseBo};
-use crate::bo::user::UserAuthTokenBo;
+use ppaass_blog_persistence::dao::user::find_by_username;
+use ppaass_blog_persistence::dto::post::CreatePostDto;
+use crate::bo::Pagination;
+use crate::bo::post::{
+    CreatePostRequestBo, CreatePostResponseBo, ListPostsResponseBo, PostAdditionalInfoBo,
+    PostDetailBo,
+};
 use crate::error::EntryError;
 use crate::extractor::auth_token::UserAuthToken;
 use crate::state::ApplicationState;
 pub async fn create_post(
     Path(blog_token): Path<String>,
-    UserAuthToken(UserAuthTokenBo { username, .. }): UserAuthToken,
+    UserAuthToken(user_auth_token): UserAuthToken,
     State(state): State<ApplicationState>,
     Json(CreatePostRequestBo {
         title,
@@ -22,34 +23,56 @@ pub async fn create_post(
         additional_info: post_additional_info,
     }): Json<CreatePostRequestBo>,
 ) -> Result<Json<CreatePostResponseBo>, EntryError> {
-    let user_from_db = UserEntity::find()
-        .filter(UserColumn::Username.eq(&username))
-        .one(state.database())
-        .await?
-        .ok_or(EntryError::UserNotFoundByUsername(username.clone()))?;
-    let blog_from_db = BlogEntity::find()
-        .filter(
-            BlogColumn::Token
-                .eq(&blog_token)
-                .and(BlogColumn::UserId.eq(user_from_db.id)),
-        )
-        .one(state.database())
-        .await?
-        .ok_or(EntryError::BlogNotFoundByToken(blog_token.clone()))?;
-    let post_entity = PostActiveModel {
-        title: Set(title),
-        content: Set(Some(content)),
-        create_date: Set(Utc::now()),
-        update_date: Set(Utc::now()),
-        blog_id: Set(blog_from_db.id),
-        token: Set(Uuid::new_v4().to_string()),
-        additional_info: Set(PostAdditionalInfo {
-            labels: post_additional_info.labels,
-        }),
-        ..Default::default()
+    let user_from_db = find_by_username(state.database(), &user_auth_token.username).await?;
+    let Some(user_from_db) = user_from_db else {
+        return Err(EntryError::UserNotFoundByUsername(user_auth_token.username));
     };
-    let post_from_db = post_entity.insert(state.database()).await?;
+    let post_dto = dao_create_post(
+        state.database(),
+        CreatePostDto {
+            title,
+            content,
+            labels: post_additional_info.labels,
+            blog_token,
+        },
+    )
+    .await?;
+
     Ok(Json(CreatePostResponseBo {
-        token: post_from_db.token,
+        token: post_dto.token,
+    }))
+}
+
+#[debug_handler]
+pub async fn list_posts(
+    Path(blog_token): Path<String>,
+    Query(Pagination {
+        page_index,
+        page_size,
+    }): Query<Pagination>,
+    State(state): State<ApplicationState>,
+) -> Result<Json<ListPostsResponseBo>, EntryError> {
+    let page_index = page_index.unwrap_or(0u64);
+    let page_size = page_size.unwrap_or(u64::MAX);
+    let posts =
+        find_all_posts_by_blog_token(state.database(), blog_token, page_index, page_size).await?;
+    let posts = posts
+        .into_iter()
+        .map(|post| PostDetailBo {
+            token: post.token,
+            title: post.title,
+            content: post.content,
+            additional_info: PostAdditionalInfoBo {
+                labels: post.labels,
+            },
+            blog_token: post.blog_token,
+        })
+        .collect();
+    Ok(Json(ListPostsResponseBo {
+        posts,
+        pagination: Pagination {
+            page_index: Some(page_index),
+            page_size: Some(page_size),
+        },
     }))
 }

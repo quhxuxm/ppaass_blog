@@ -1,44 +1,28 @@
+use crate::config::{Config, LogConfig};
+use crate::extractor::auth_token::UserAuthToken;
+use crate::state::ApplicationState;
+use anyhow::{Ok, Result};
+use axum::middleware::from_extractor_with_state;
+use axum::routing::{get, post};
+use axum::Router;
+use ppaass_blog_persistence::{init_database_connection, DatabaseConnection};
 use std::fs::read_to_string;
 use std::path::Path;
 use std::str::FromStr;
-use std::time::Duration;
-use anyhow::{Ok, Result};
-use axum::middleware::{from_extractor_with_state, from_fn_with_state};
-use axum::Router;
-use axum::routing::{get, post};
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing::level_filters::LevelFilter;
 use tracing_appender::non_blocking::{NonBlocking, WorkerGuard};
 use tracing_subscriber::fmt::format::{DefaultFields, Format, Full};
-use tracing_subscriber::fmt::Subscriber;
 use tracing_subscriber::fmt::time::ChronoUtc;
-use migration::{Migrator, MigratorTrait};
-use migration::sea_orm::{ConnectOptions, Database, DatabaseConnection};
-use crate::config::{Config, DatabaseConfig, LogConfig};
-use crate::extractor::auth_token::UserAuthToken;
-use crate::state::ApplicationState;
+use tracing_subscriber::fmt::Subscriber;
 mod bo;
 mod config;
 mod error;
-
 mod extractor;
 mod handler;
 mod state;
 const CONFIG_FILE_PATH: &str = "resource/config.toml";
-async fn init_database_connection(database_config: &DatabaseConfig) -> Result<DatabaseConnection> {
-    let mut database_connect_options =
-        ConnectOptions::new(database_config.generate_url()?).to_owned();
-    database_connect_options.max_connections(database_config.max_connections());
-    database_connect_options.min_connections(database_config.min_connections());
-    database_connect_options.acquire_timeout(Duration::from_secs(
-        database_config.connection_acquire_timeout().into(),
-    ));
-    let database = Database::connect(database_connect_options).await?;
-    // Migrator::down(&database, None).await?;
-    Migrator::up(&database, None).await?;
-    Ok(database)
-}
 
 fn init_tracing_subscriber(
     log_config: &LogConfig,
@@ -73,7 +57,9 @@ fn init_router(database: DatabaseConnection, config: Config) -> Router {
         .route("/user/register", post(handler::user::register_user))
         .route("/user/:username", get(handler::user::get_user))
         .route("/user/auth", post(handler::user::auth_user))
-        .route("/blog/:blog_token", get(handler::blog::get_blog))
+        .route("/blog/:blog_token", get(handler::blog::get_blog_detail))
+        .route("/blog/list/:username", get(handler::blog::list_blogs))
+        .route("/post/list/:blog_token", get(handler::post::list_posts))
         .with_state(state)
 }
 
