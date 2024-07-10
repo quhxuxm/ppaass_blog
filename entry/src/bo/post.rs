@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::bo::Pagination;
+use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PostAdditionalInfoBo {
     pub labels: Vec<String>,

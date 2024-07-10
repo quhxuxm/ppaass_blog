@@ -1,12 +1,17 @@
 use crate::dto::post::{CreatePostDto, PostDto, UpdatePostDto};
 use crate::error::DaoError;
 use chrono::Utc;
-use ppaass_blog_domain::entity::{BlogColumn, BlogEntity, PostActiveModel, PostAdditionalInfo, PostColumn, PostEntity, PostRelation};
-use sea_orm::ActiveValue::Set;
-use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, PaginatorTrait, QueryFilter, QuerySelect, RelationTrait, TransactionTrait, TryIntoModel};
-use uuid::Uuid;
 use migration::JoinType;
-use crate::dto::blog::BlogDto;
+use ppaass_blog_domain::entity::{
+    BlogColumn, BlogEntity, PostActiveModel, PostAdditionalInfo, PostColumn, PostEntity,
+    PostRelation,
+};
+use sea_orm::ActiveValue::Set;
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel,
+    PaginatorTrait, QueryFilter, QuerySelect, RelationTrait, TransactionTrait, TryIntoModel,
+};
+use uuid::Uuid;
 pub async fn create_post(
     database: &DatabaseConnection,
     CreatePostDto {
@@ -102,15 +107,21 @@ pub async fn find_all_posts_by_blog_token(
     page_index: u64,
     page_size: u64,
 ) -> Result<Vec<PostDto>, DaoError> {
-  let post_page=  PostEntity::find().join(JoinType::InnerJoin, PostRelation::Blog.def()).filter(BlogColumn::Token.eq(&blog_token))       .paginate(database, page_size);
-    let post_page=post_page.fetch_page(page_index).await?;
-    Ok(post_page.into_iter().map(|post| PostDto {
-        token: post.token,
-        title: post.title,
-        content: post.content,
-        labels: post.additional_info.labels,
-        blog_token: blog_token.clone(),
-        create_date: post.create_date,
-        update_date: post.update_date,
-    }).collect())
+    let post_page = PostEntity::find()
+        .join(JoinType::InnerJoin, PostRelation::Blog.def())
+        .filter(BlogColumn::Token.eq(&blog_token))
+        .paginate(database, page_size);
+    let post_page = post_page.fetch_page(page_index).await?;
+    Ok(post_page
+        .into_iter()
+        .map(|post| PostDto {
+            token: post.token,
+            title: post.title,
+            content: post.content,
+            labels: post.additional_info.labels,
+            blog_token: blog_token.clone(),
+            create_date: post.create_date,
+            update_date: post.update_date,
+        })
+        .collect())
 }
