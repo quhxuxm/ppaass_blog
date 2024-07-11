@@ -1,17 +1,17 @@
+use std::time::Duration;
+use axum::{debug_handler, Json};
+use axum::extract::{Path, State};
+use chrono::Utc;
+use jsonwebtoken::{Algorithm, encode, EncodingKey, Header};
+use uuid::Uuid;
+use ppaass_blog_persistence::dao::user::{create_user, find_by_username};
+use ppaass_blog_persistence::dto::user::CreateUserDto;
 use crate::bo::user::{
     AuthUserRequestBo, AuthUserResponseBo, GetUserResponseBo, RegisterUserRequestBo,
-    RegisterUserResponseBo, UserAdditionalInfoBo, UserAuthTokenBo,
+    RegisterUserResponseBo, UserAuthTokenBo,
 };
 use crate::error::EntryError;
 use crate::state::ApplicationState;
-use axum::extract::{Path, State};
-use axum::{debug_handler, Json};
-use chrono::Utc;
-use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
-use ppaass_blog_persistence::dao::user::{create_user, find_by_username};
-use ppaass_blog_persistence::dto::user::CreateUserDto;
-use std::time::Duration;
-use uuid::Uuid;
 #[debug_handler]
 pub async fn auth_user(
     State(state): State<ApplicationState>,
@@ -30,9 +30,7 @@ pub async fn auth_user(
         username: user_from_db.username.clone(),
         exp: (Utc::now() + Duration::from_secs(state.config().jwt().expire_duration_seconds()))
             .timestamp_millis(),
-        additional_info: UserAdditionalInfoBo {
-            labels: user_from_db.labels.clone(),
-        },
+        labels: user_from_db.labels.clone(),
     };
     let jwt_encoding_key = EncodingKey::from_secret(state.config().jwt().secret().as_bytes());
     let auth_token = encode(&jwt_header, &jwt_payload, &jwt_encoding_key)
@@ -41,9 +39,7 @@ pub async fn auth_user(
     Ok(Json(AuthUserResponseBo {
         username: user_from_db.username,
         display_name: user_from_db.display_name,
-        additional_info: UserAdditionalInfoBo {
-            labels: user_from_db.labels,
-        },
+        labels: user_from_db.labels,
         auth_token,
     }))
 }
@@ -60,9 +56,7 @@ pub async fn get_user(
     Ok(Json(GetUserResponseBo {
         username: user_from_db.username,
         display_name: user_from_db.display_name,
-        additional_info: UserAdditionalInfoBo {
-            labels: user_from_db.labels,
-        },
+        labels: user_from_db.labels,
     }))
 }
 
@@ -93,8 +87,6 @@ pub async fn register_user(
     Ok(Json(RegisterUserResponseBo {
         username: user_from_db.username,
         display_name: user_from_db.display_name,
-        additional_info: UserAdditionalInfoBo {
-            labels: user_from_db.labels,
-        },
+        labels: user_from_db.labels,
     }))
 }

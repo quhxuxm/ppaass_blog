@@ -1,17 +1,17 @@
-use crate::bo::blog::{
-    BlogAdditionalInfoBo, BlogDetailBo, CreateBlogRequestBo, CreateBlogResponseBo,
-};
-use crate::bo::{PaginationRequestBo, PaginationResponseBo};
-use crate::error::EntryError;
-use crate::extractor::auth_token::UserAuthToken;
-use crate::state::ApplicationState;
-use axum::extract::{Path, Query, State};
 use axum::{debug_handler, Json};
-use ppaass_blog_persistence::dao::blog::get_blog as dao_get_blog_detail;
+use axum::extract::{Path, Query, State};
 use ppaass_blog_persistence::dao::blog::{
     create_blog as dao_create_blog, find_all_blogs_by_username,
 };
+use ppaass_blog_persistence::dao::blog::get_blog as dao_get_blog_detail;
 use ppaass_blog_persistence::dto::blog::CreateBlogDto;
+use crate::bo::{PaginationRequestBo, PaginationResponseBo};
+use crate::bo::blog::{
+    BlogDetailBo, CreateBlogRequestBo, CreateBlogResponseBo,
+};
+use crate::error::EntryError;
+use crate::extractor::auth_token::UserAuthToken;
+use crate::state::ApplicationState;
 #[debug_handler]
 pub async fn create_blog(
     State(state): State<ApplicationState>,
@@ -19,7 +19,7 @@ pub async fn create_blog(
     Json(CreateBlogRequestBo {
         title,
         summary,
-        additional_info,
+        labels,
     }): Json<CreateBlogRequestBo>,
 ) -> Result<Json<CreateBlogResponseBo>, EntryError> {
     let blog_from_db = dao_create_blog(
@@ -28,7 +28,7 @@ pub async fn create_blog(
             title,
             summary,
             username: user_auth_token.username,
-            labels: additional_info.labels,
+            labels,
         },
     )
     .await?;
@@ -47,9 +47,7 @@ pub async fn get_blog_detail(
         token: blog_dto.token,
         title: blog_dto.title,
         summary: blog_dto.summary,
-        additional_info: BlogAdditionalInfoBo {
-            labels: blog_dto.labels,
-        },
+        labels: blog_dto.labels,
         owner_username: blog_dto.owner_username,
     }))
 }
@@ -74,9 +72,7 @@ pub async fn list_blogs(
             token: blog.token,
             title: blog.title,
             summary: blog.summary,
-            additional_info: BlogAdditionalInfoBo {
-                labels: blog.labels,
-            },
+            labels: blog.labels,
             owner_username: blog.owner_username,
         })
         .collect();

@@ -1,17 +1,15 @@
-use crate::bo::post::{
-    CreatePostRequestBo, CreatePostResponseBo, PostAdditionalInfoBo, PostDetailBo,
-};
-use crate::bo::{PaginationRequestBo, PaginationResponseBo};
-use crate::error::EntryError;
-use crate::extractor::auth_token::UserAuthToken;
-use crate::state::ApplicationState;
-use axum::extract::{Path, Query, State};
 use axum::{debug_handler, Json};
+use axum::extract::{Path, Query, State};
 use ppaass_blog_persistence::dao::post::{
     create_post as dao_create_post, find_all_posts_by_blog_token,
 };
 use ppaass_blog_persistence::dao::user::find_by_username;
 use ppaass_blog_persistence::dto::post::CreatePostDto;
+use crate::bo::{PaginationRequestBo, PaginationResponseBo};
+use crate::bo::post::{CreatePostRequestBo, CreatePostResponseBo, PostDetailBo};
+use crate::error::EntryError;
+use crate::extractor::auth_token::UserAuthToken;
+use crate::state::ApplicationState;
 pub async fn create_post(
     Path(blog_token): Path<String>,
     UserAuthToken(user_auth_token): UserAuthToken,
@@ -19,11 +17,11 @@ pub async fn create_post(
     Json(CreatePostRequestBo {
         title,
         content,
-        additional_info: post_additional_info,
+        labels,
     }): Json<CreatePostRequestBo>,
 ) -> Result<Json<CreatePostResponseBo>, EntryError> {
     let user_from_db = find_by_username(state.database(), &user_auth_token.username).await?;
-    let Some(user_from_db) = user_from_db else {
+    let Some(_) = user_from_db else {
         return Err(EntryError::UserNotFoundByUsername(user_auth_token.username));
     };
     let post_dto = dao_create_post(
@@ -31,7 +29,7 @@ pub async fn create_post(
         CreatePostDto {
             title,
             content,
-            labels: post_additional_info.labels,
+            labels,
             blog_token,
         },
     )
@@ -62,9 +60,7 @@ pub async fn list_posts(
             token: post.token,
             title: post.title,
             content: post.content,
-            additional_info: PostAdditionalInfoBo {
-                labels: post.labels,
-            },
+            labels: post.labels,
             blog_token: post.blog_token,
         })
         .collect();

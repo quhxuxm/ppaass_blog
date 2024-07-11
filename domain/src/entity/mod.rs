@@ -1,6 +1,5 @@
 // The definition of blog
 pub use blog::ActiveModel as BlogActiveModel;
-pub use blog::AdditionalInfo as BlogAdditionalInfo;
 pub use blog::Column as BlogColumn;
 pub use blog::Entity as BlogEntity;
 pub use blog::Model as BlogModel;
@@ -30,7 +29,6 @@ pub use post_label::Model as PostLabelModel;
 pub use post_label::Relation as PostLabelRelation;
 // The definition of user
 pub use user::ActiveModel as UserActiveModel;
-pub use user::AdditionalInfo as UserAdditionalInfo;
 pub use user::Column as UserColumn;
 pub use user::Entity as UserEntity;
 pub use user::Model as UserModel;
@@ -41,9 +39,9 @@ pub use user_label::Entity as UserLabelEntity;
 pub use user_label::Model as UserLabelModel;
 pub use user_label::Relation as UserLabelRelation;
 mod blog;
+mod blog_label;
 mod label;
 mod post;
 mod post_label;
 mod user;
 mod user_label;
-mod blog_label;

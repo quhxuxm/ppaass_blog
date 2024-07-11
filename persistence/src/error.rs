@@ -1,6 +1,6 @@
-use migration::sea_orm::TransactionError;
-use migration::DbErr;
+use sea_orm::error::DbErr;
 use thiserror::Error;
+use migration::sea_orm::TransactionError;
 #[derive(Error, Debug)]
 pub enum DaoError {
     #[error("User not found by username: {0}")]
@@ -17,4 +17,10 @@ pub enum DaoError {
     DatabaseGeneral(#[from] DbErr),
     #[error("Database configuration error happen: {0}")]
     DatabaseConfiguration(String),
+}
+
+impl From<DaoError> for DbErr {
+    fn from(value: DaoError) -> Self {
+        DbErr::Custom(format!("Database error happen: {value}"))
+    }
 }

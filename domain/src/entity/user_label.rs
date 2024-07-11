@@ -1,6 +1,6 @@
+use crate::entity::{LabelEntity, UserEntity};
 use chrono::{DateTime, Utc};
 use sea_orm::prelude::*;
-use crate::entity::{LabelEntity, UserEntity};
 #[derive(Clone, Debug, Eq, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "user_label")]
 pub struct Model {

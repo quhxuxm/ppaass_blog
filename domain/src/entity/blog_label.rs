@@ -1,6 +1,6 @@
+use crate::entity::{BlogEntity, LabelEntity};
 use chrono::{DateTime, Utc};
 use sea_orm::prelude::*;
-use crate::entity::{BlogEntity, LabelEntity};
 #[derive(Clone, Debug, Eq, PartialEq, DeriveEntityModel)]
 #[sea_orm(table_name = "blog_label")]
 pub struct Model {
