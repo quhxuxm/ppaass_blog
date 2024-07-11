@@ -1,17 +1,17 @@
-use std::time::Duration;
-use axum::{debug_handler, Json};
-use axum::extract::{Path, State};
-use chrono::Utc;
-use jsonwebtoken::{Algorithm, encode, EncodingKey, Header};
-use uuid::Uuid;
-use ppaass_blog_persistence::dao::user::{create_user, find_by_username};
-use ppaass_blog_persistence::dto::user::CreateUserDto;
 use crate::bo::user::{
     AuthUserRequestBo, AuthUserResponseBo, GetUserResponseBo, RegisterUserRequestBo,
     RegisterUserResponseBo, UserAuthTokenBo,
 };
 use crate::error::EntryError;
 use crate::state::ApplicationState;
+use axum::extract::{Path, State};
+use axum::{debug_handler, Json};
+use chrono::Utc;
+use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
+use ppaass_blog_persistence::dao::user::{create_user, find_by_username};
+use ppaass_blog_persistence::dto::user::CreateUserDto;
+use std::time::Duration;
+use uuid::Uuid;
 #[debug_handler]
 pub async fn auth_user(
     State(state): State<ApplicationState>,

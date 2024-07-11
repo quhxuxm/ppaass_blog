@@ -1,6 +1,6 @@
+use migration::sea_orm::TransactionError;
 use sea_orm::error::DbErr;
 use thiserror::Error;
-use migration::sea_orm::TransactionError;
 #[derive(Error, Debug)]
 pub enum DaoError {
     #[error("User not found by username: {0}")]

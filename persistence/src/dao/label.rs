@@ -1,10 +1,10 @@
+use crate::error::DaoError;
+use ppaass_blog_domain::entity::{LabelActiveModel, LabelColumn, LabelEntity};
+use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, TransactionTrait,
     TryIntoModel,
 };
-use sea_orm::ActiveValue::Set;
-use ppaass_blog_domain::entity::{LabelActiveModel, LabelColumn, LabelEntity};
-use crate::error::DaoError;
 pub async fn save_all_label<C: ConnectionTrait + TransactionTrait>(
     database: &C,
     texts: Vec<String>,

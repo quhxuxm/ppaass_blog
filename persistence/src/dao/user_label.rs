@@ -1,13 +1,13 @@
+use crate::error::DaoError;
 use chrono::Utc;
+use ppaass_blog_domain::entity::{
+    LabelEntity, UserLabelActiveModel, UserLabelColumn, UserLabelEntity,
+};
+use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, TransactionTrait,
     TryIntoModel,
 };
-use sea_orm::ActiveValue::Set;
-use ppaass_blog_domain::entity::{
-    LabelEntity, UserLabelActiveModel, UserLabelColumn, UserLabelEntity,
-};
-use crate::error::DaoError;
 pub async fn find_labels_by_user<C: ConnectionTrait + TransactionTrait>(
     database: &C,
     user_id: u32,

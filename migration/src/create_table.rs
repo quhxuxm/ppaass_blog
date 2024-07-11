@@ -56,17 +56,13 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(UserLabel::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(UserLabel::UserId)
-                            .big_unsigned()
-                            .not_null()
+                    .col(ColumnDef::new(UserLabel::UserId).big_unsigned().not_null())
+                    .col(ColumnDef::new(UserLabel::LabelId).big_unsigned().not_null())
+                    .primary_key(
+                        Index::create()
+                            .col(UserLabel::UserId)
+                            .col(UserLabel::LabelId),
                     )
-                    .col(
-                        ColumnDef::new(UserLabel::LabelId)
-                            .big_unsigned()
-                            .not_null()
-                    )
-                    .primary_key(Index::create().col(UserLabel::UserId).col(UserLabel::LabelId))
                     .col(ColumnDef::new(UserLabel::CreateDate).date_time().not_null())
                     .to_owned(),
             )
@@ -97,19 +93,13 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(BlogLabel::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(BlogLabel::BlogId)
-                            .big_unsigned()
-                            .not_null()
-                  
+                    .col(ColumnDef::new(BlogLabel::BlogId).big_unsigned().not_null())
+                    .col(ColumnDef::new(BlogLabel::LabelId).big_unsigned().not_null())
+                    .primary_key(
+                        Index::create()
+                            .col(BlogLabel::BlogId)
+                            .col(BlogLabel::LabelId),
                     )
-                    .col(
-                        ColumnDef::new(BlogLabel::LabelId)
-                            .big_unsigned()
-                            .not_null()
-                    
-                    )
-                    .primary_key(Index::create().col(BlogLabel::BlogId).col(BlogLabel::LabelId))
                     .col(ColumnDef::new(BlogLabel::CreateDate).date_time().not_null())
                     .to_owned(),
             )
@@ -140,17 +130,13 @@ impl MigrationTrait for Migration {
                 Table::create()
                     .table(PostLabel::Table)
                     .if_not_exists()
-                    .col(
-                        ColumnDef::new(PostLabel::PostId)
-                            .big_unsigned()
-                            .not_null()
+                    .col(ColumnDef::new(PostLabel::PostId).big_unsigned().not_null())
+                    .col(ColumnDef::new(PostLabel::LabelId).big_unsigned().not_null())
+                    .primary_key(
+                        Index::create()
+                            .col(PostLabel::PostId)
+                            .col(PostLabel::LabelId),
                     )
-                    .col(
-                        ColumnDef::new(PostLabel::LabelId)
-                            .big_unsigned()
-                            .not_null()
-                    )
-                    .primary_key(Index::create().col(PostLabel::PostId).col(PostLabel::LabelId))
                     .col(ColumnDef::new(PostLabel::CreateDate).date_time().not_null())
                     .to_owned(),
             )
