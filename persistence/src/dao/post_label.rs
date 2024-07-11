@@ -29,8 +29,8 @@ pub async fn find_labels_by_post<C: ConnectionTrait + TransactionTrait>(
 
 pub async fn save_post_label<C: ConnectionTrait + TransactionTrait>(
     database: &C,
-    label_id: u32,
     post_id: u32,
+    label_id: u32,
 ) -> Result<(), DaoError> {
     database
         .transaction(|txn| {
@@ -44,7 +44,7 @@ pub async fn save_post_label<C: ConnectionTrait + TransactionTrait>(
                         label_id: Set(label_id),
                         create_date: Set(Utc::now()),
                     }
-                    .save(txn)
+                    .insert(txn)
                     .await?
                     .try_into_model(),
                     Some(model) => Ok(model),

@@ -10,7 +10,7 @@ password = "123456"
 database_name = "ppaass_blog_db"
 max_connections = 32
 min_connections = 32
-connection_acquire_timeout = 1
+connection_acquire_timeout = 10
 [log]
 file_name_prefix = "ppaass-blog"
 max_log_level = "DEBUG"

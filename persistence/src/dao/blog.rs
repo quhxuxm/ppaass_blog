@@ -11,7 +11,7 @@ use ppaass_blog_domain::entity::{
     BlogActiveModel, BlogColumn, BlogEntity, BlogRelation, UserColumn, UserEntity,
 };
 use crate::dao::blog_label::{find_labels_by_blog, save_blog_label};
-use crate::dao::label::save_label;
+use crate::dao::label::save_all_label;
 use crate::dao::PageDto;
 use crate::dto::blog::{BlogDto, CreateBlogDto, UpdateBlogDto};
 use crate::error::DaoError;
@@ -68,13 +68,9 @@ pub async fn create_blog<C: ConnectionTrait + TransactionTrait>(
                 };
                 let blog = blog.save(txn).await?;
                 let blog = blog.try_into_model()?;
-                let mut label_ids_from_db = Vec::new();
-                for text in &labels {
-                    let label_id_from_db = save_label(txn, text.to_owned()).await?;
-                    label_ids_from_db.push(label_id_from_db);
-                }
-                for label_id_from_db in label_ids_from_db {
-                    save_blog_label(txn, blog.id, label_id_from_db).await?;
+                let label_ids = save_all_label(txn, labels).await?;
+                for label_id in label_ids {
+                    save_blog_label(txn, blog.id, label_id).await?;
                 }
                 Ok(blog)
             })
@@ -101,7 +97,7 @@ pub async fn update_blog<C: ConnectionTrait + TransactionTrait>(
         labels,
     }: UpdateBlogDto,
 ) -> Result<BlogDto, DaoError> {
-    let (blog, owner_username, labels) = database
+    let (blog, owner_username) = database
         .transaction(|txn| {
             Box::pin(async move {
                 let (blog, owner) = BlogEntity::find()
@@ -123,22 +119,16 @@ pub async fn update_blog<C: ConnectionTrait + TransactionTrait>(
                 let blog = blog.save(txn).await?;
                 let blog = blog.try_into_model()?;
                 if let Some(labels) = labels {
-                    let mut label_ids_from_db = Vec::new();
-                    for text in labels {
-                        let label_id_from_db = save_label(txn, text).await?;
-                        label_ids_from_db.push(label_id_from_db);
-                    }
-                    for label_id_from_db in label_ids_from_db {
-                        save_blog_label(txn, blog.id, label_id_from_db).await?;
+                    let label_ids = save_all_label(txn, labels).await?;
+                    for label_id in label_ids {
+                        save_blog_label(txn, blog.id, label_id).await?;
                     }
                 }
-                let labels = find_labels_by_blog(txn, blog.id).await?;
-
-                Ok((blog, owner.username, labels))
+                Ok((blog, owner.username))
             })
         })
         .await?;
-
+    let labels = find_labels_by_blog(database, blog.id).await?;
     Ok(BlogDto {
         token: blog.token,
         title: blog.title,

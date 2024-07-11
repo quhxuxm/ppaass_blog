@@ -5,7 +5,7 @@ use migration::sea_orm::{
     TransactionTrait, TryIntoModel,
 };
 use ppaass_blog_domain::entity::{UserActiveModel, UserColumn, UserEntity};
-use crate::dao::label::save_label;
+use crate::dao::label::save_all_label;
 use crate::dao::user_label::{find_labels_by_user, save_user_label};
 use crate::dto::user::{CreateUserDto, UpdateUserDto, UserDto};
 use crate::error::DaoError;
@@ -52,13 +52,9 @@ pub async fn create_user<C: ConnectionTrait + TransactionTrait>(
                 };
                 let user_model = user_model.save(txn).await?;
                 let user_model = user_model.try_into_model()?;
-                let mut label_ids_from_db = Vec::new();
-                for text in labels {
-                    let label_id_from_db = save_label(txn, text).await?;
-                    label_ids_from_db.push(label_id_from_db);
-                }
-                for label_id_from_db in label_ids_from_db {
-                    save_user_label(txn, user_model.id, label_id_from_db).await?;
+                let label_ids = save_all_label(txn, labels).await?;
+                for label_id in label_ids {
+                    save_user_label(txn, user_model.id, label_id).await?;
                 }
                 Ok(user_model)
             })
@@ -83,7 +79,7 @@ pub async fn update_user<C: ConnectionTrait + TransactionTrait>(
         labels,
     }: UpdateUserDto,
 ) -> Result<UserDto, DaoError> {
-    let (user_model, labels) = database
+    let user_model = database
         .transaction(|txn| {
             Box::pin(async move {
                 let user_from_db = UserEntity::find()
@@ -91,7 +87,6 @@ pub async fn update_user<C: ConnectionTrait + TransactionTrait>(
                     .one(txn)
                     .await?
                     .ok_or(DaoError::UserNotFoundByUsername(username))?;
-                let user_id = user_from_db.id;
                 let mut user_model = user_from_db.into_active_model();
                 if let Some(display_name) = display_name {
                     user_model.display_name = Set(display_name)
@@ -99,24 +94,19 @@ pub async fn update_user<C: ConnectionTrait + TransactionTrait>(
                 if let Some(password) = password {
                     user_model.password = Set(password)
                 }
-                if let Some(labels) = labels {
-                    let mut label_ids_from_db = Vec::new();
-                    for text in labels {
-                        let label_id_from_db = save_label(txn, text).await?;
-                        label_ids_from_db.push(label_id_from_db);
-                    }
-                    for label_id in label_ids_from_db {
-                        save_user_label(txn, label_id, user_id).await?;
-                    }
-                }
                 let user_model = user_model.save(txn).await?;
                 let user_model = user_model.try_into_model()?;
-                let labels = find_labels_by_user(txn, user_model.id).await?;
-                Ok((user_model, labels))
+                if let Some(labels) = labels {
+                    let label_ids = save_all_label(txn, labels).await?;
+                    for label_id in label_ids {
+                        save_user_label(txn, user_model.id, label_id).await?;
+                    }
+                }
+                Ok(user_model)
             })
         })
         .await?;
-
+    let labels = find_labels_by_user(database, user_model.id).await?;
     Ok(UserDto {
         username: user_model.username,
         password: user_model.password,

@@ -2,13 +2,13 @@ POST localhost:9090/user/register
 Content-Type: application/json
 
 {
-  "username": "quhao3",
+  "username": "quhao5",
   "password": "password",
-  "display_name": "Qu Hao 3",
+  "display_name": "Qu Hao 5",
   "labels": [
-    "LA-quhao3",
-    "LB-quhao3",
-    "LC-quhao3"
+    "LA-quhao5",
+    "LB-quhao5",
+    "LC-quhao5"
   ]
 }
 
@@ -23,18 +23,16 @@ Content-Type: application/json
 
 ###
 POST http://localhost:9090/blog/create
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjFkNDI2M2RhLTQ2MzYtNDdhZC1iNThlLTZiN2ZkNDY1MjYzYSJ9.eyJ1c2VybmFtZSI6InF1aGFvMiIsImV4cCI6MTcyMDUzNzQ2MzI4MywiYWRkaXRpb25hbF9pbmZvIjp7ImxhYmVscyI6WyJMQS1xdWhhbzIiLCJMQi1xdWhhbzIiLCJMQy1xdWhhbzIiXX19.EYeLpjqkKCEEfOtjNcGAdYGU_mlSlNxxLdDsOezVMLzr5jpAF2So8Af5PZ4Gd2hynsB_wbY6g1BnxzSUWWluoQ
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjU2NDNlZDAyLWIwODEtNDdlNi04MTk5LTdmNTI3ZTIzZjQ5MyJ9.eyJ1c2VybmFtZSI6InF1aGFvMiIsImV4cCI6MTcyMDY5MTk5ODY1MiwibGFiZWxzIjpbXX0.OBw321D32hYo748ULHcSYi4JQ8aTrjbTd0q5roLUeXXCpHasq834UTimmruPtXTDZL28J2aVDkzMfzwCE8uKXQ
 Content-Type: application/json
 
 {
-  "title": "Title 4-quhao2",
+  "title": "Title 4-quhao3",
   "summary": "Summary 4-quhao2",
-  "additional_info": {
-    "labels": [
-      "BL1",
-      "BL2"
-    ]
-  }
+  "labels": [
+    "BL1",
+    "BL2"
+  ]
 }
 
 ###
@@ -42,19 +40,17 @@ GET http://localhost:9090/blog/71f4b37b-e029-49a8-b58e-4408ecb0bf35
 Content-Type: application/json
 
 ###
-POST http://localhost:9090/post/create/1262e311-8da3-4ab2-ad6a-9153d7da6a6c
-Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjFkNDI2M2RhLTQ2MzYtNDdhZC1iNThlLTZiN2ZkNDY1MjYzYSJ9.eyJ1c2VybmFtZSI6InF1aGFvMiIsImV4cCI6MTcyMDUzNzQ2MzI4MywiYWRkaXRpb25hbF9pbmZvIjp7ImxhYmVscyI6WyJMQS1xdWhhbzIiLCJMQi1xdWhhbzIiLCJMQy1xdWhhbzIiXX19.EYeLpjqkKCEEfOtjNcGAdYGU_mlSlNxxLdDsOezVMLzr5jpAF2So8Af5PZ4Gd2hynsB_wbY6g1BnxzSUWWluoQ
+POST http://localhost:9090/post/create/4e4f5b2a-fe13-4307-80ea-81f34553170f
+Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiIsImtpZCI6IjU2NDNlZDAyLWIwODEtNDdlNi04MTk5LTdmNTI3ZTIzZjQ5MyJ9.eyJ1c2VybmFtZSI6InF1aGFvMiIsImV4cCI6MTcyMDY5MTk5ODY1MiwibGFiZWxzIjpbXX0.OBw321D32hYo748ULHcSYi4JQ8aTrjbTd0q5roLUeXXCpHasq834UTimmruPtXTDZL28J2aVDkzMfzwCE8uKXQ
 Content-Type: application/json
 
 {
   "title": "Title 3",
   "content": "Summary 3",
-  "additional_info": {
-    "labels": [
-      "PL1",
-      "PL2"
-    ]
-  }
+  "labels": [
+    "PL1",
+    "PL2"
+  ]
 }
 
 ###
@@ -62,5 +58,5 @@ GET http://localhost:9090/blog/list/quhao2
 Content-Type: application/json
 
 ###
-GET http://localhost:9090/post/list/1262e311-8da3-4ab2-ad6a-9153d7da6a6c
+GET http://localhost:9090/post/list/4e4f5b2a-fe13-4307-80ea-81f34553170f
 Content-Type: application/json

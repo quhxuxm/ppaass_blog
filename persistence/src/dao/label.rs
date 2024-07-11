@@ -1,10 +1,29 @@
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter,
-    TransactionTrait, TryIntoModel,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, TransactionTrait,
+    TryIntoModel,
 };
 use sea_orm::ActiveValue::Set;
 use ppaass_blog_domain::entity::{LabelActiveModel, LabelColumn, LabelEntity};
 use crate::error::DaoError;
+pub async fn save_all_label<C: ConnectionTrait + TransactionTrait>(
+    database: &C,
+    texts: Vec<String>,
+) -> Result<Vec<u32>, DaoError> {
+    let label_ids = database
+        .transaction(|txn| {
+            Box::pin(async move {
+                let mut label_ids = Vec::new();
+                for text in texts {
+                    let label_id = save_label(txn, text).await?;
+                    label_ids.push(label_id)
+                }
+                Ok(label_ids)
+            })
+        })
+        .await?;
+    Ok(label_ids)
+}
+
 pub async fn save_label<C: ConnectionTrait + TransactionTrait>(
     database: &C,
     text: String,

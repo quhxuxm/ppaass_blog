@@ -9,7 +9,7 @@ use migration::JoinType;
 use ppaass_blog_domain::entity::{
     BlogColumn, BlogEntity, PostActiveModel, PostColumn, PostEntity, PostRelation,
 };
-use crate::dao::label::save_label;
+use crate::dao::label::{save_all_label, save_label};
 use crate::dao::PageDto;
 use crate::dao::post_label::{find_labels_by_post, save_post_label};
 use crate::dto::post::{CreatePostDto, PostDto, UpdatePostDto};
@@ -44,13 +44,9 @@ pub async fn create_post<C: ConnectionTrait + TransactionTrait>(
                 };
                 let post_from_db = post_to_db.save(txn).await?;
                 let post_from_db = post_from_db.try_into_model()?;
-                let mut label_ids_from_db = Vec::new();
-                for text in &labels {
-                    let label_id_from_db = save_label(txn, text.to_owned()).await?;
-                    label_ids_from_db.push(label_id_from_db);
-                }
-                for label_id_from_db in label_ids_from_db {
-                    save_post_label(txn, post_from_db.id, label_id_from_db).await?;
+                let label_ids = save_all_label(txn, labels).await?;
+                for label_id in label_ids {
+                    save_post_label(txn, post_from_db.id, label_id).await?;
                 }
                 Ok(post_from_db)
             })
@@ -78,7 +74,7 @@ pub async fn update_post<C: ConnectionTrait + TransactionTrait>(
         blog_token,
     }: UpdatePostDto,
 ) -> Result<PostDto, DaoError> {
-    let (post_from_db, blog_token, labels) = database
+    let (post_from_db, blog_token) = database
         .transaction(|txn| {
             Box::pin(async move {
                 let blog_from_db = BlogEntity::find()
@@ -108,21 +104,16 @@ pub async fn update_post<C: ConnectionTrait + TransactionTrait>(
                 let post_from_db = post_from_db.try_into_model()?;
 
                 if let Some(labels) = labels {
-                    let mut label_ids_from_db = Vec::new();
-                    for text in labels {
-                        let label_id_from_db = save_label(txn, text.to_owned()).await?;
-                        label_ids_from_db.push(label_id_from_db);
-                    }
-                    for label_id_from_db in label_ids_from_db {
-                        save_post_label(txn, post_from_db.id, label_id_from_db).await?;
+                    let label_ids = save_all_label(txn, labels).await?;
+                    for label_id in label_ids {
+                        save_post_label(txn, post_from_db.id, label_id).await?;
                     }
                 }
-                let labels = find_labels_by_post(txn, post_from_db.id).await?;
-                Ok((post_from_db, blog_from_db.token, labels))
+                Ok((post_from_db, blog_from_db.token))
             })
         })
         .await?;
-
+    let labels = find_labels_by_post(database, post_from_db.id).await?;
     Ok(PostDto {
         token: post_from_db.token,
         title: post_from_db.title,
