@@ -1,11 +1,16 @@
+use ppaass_blog_persistence::dao::blog::create_blog;
+use ppaass_blog_persistence::dao::label::save_label;
+use ppaass_blog_persistence::dao::post::create_post;
+use ppaass_blog_persistence::dao::user::create_user;
+use ppaass_blog_persistence::dto::blog::CreateBlogDto;
+use ppaass_blog_persistence::dto::post::CreatePostDto;
+use ppaass_blog_persistence::dto::user::CreateUserDto;
 use sea_orm_migration::prelude::*;
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
-#[async_trait::async_trait]
-impl MigrationTrait for Migration {
-    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
-        // Replace the sample below with your own migration scripts
+impl Migration {
+    async fn initialize_table<'c>(manager: &SchemaManager<'c>) -> Result<(), DbErr> {
         manager
             .create_table(
                 Table::create()
@@ -19,6 +24,7 @@ impl MigrationTrait for Migration {
                             .auto_increment(),
                     )
                     .col(ColumnDef::new(Label::Text).string().unique_key().not_null())
+                    .col(ColumnDef::new(Label::CreateDate).date_time().not_null())
                     .to_owned(),
             )
             .await?;
@@ -144,6 +150,118 @@ impl MigrationTrait for Migration {
         Ok(())
     }
 
+    async fn generate_random_labels(number: u32, total_label_number: u32) -> Vec<String> {
+        let mut random_labels = Vec::new();
+        for _ in 0..number {
+            let random_label = format!("Label {}", rand::random::<u32>() % total_label_number);
+            random_labels.push(random_label);
+        }
+        random_labels
+    }
+    async fn generate_seed_label<'c>(
+        manager: &SchemaManager<'c>,
+        seed_label_number: u32,
+    ) -> Result<(), DbErr> {
+        for i in 0..seed_label_number {
+            save_label(manager.get_connection(), format!("Label {i}")).await?;
+        }
+        Ok(())
+    }
+    async fn generate_seed_user<'c>(
+        manager: &SchemaManager<'c>,
+        seed_label_number: u32,
+        user_index: u32,
+        seed_blog_per_user_number: u32,
+        seed_post_per_blog_number: u32,
+        label_per_seed_number: u32,
+    ) -> Result<(), DbErr> {
+        let random_labels =
+            Self::generate_random_labels(label_per_seed_number, seed_label_number).await;
+        create_user(
+            manager.get_connection(),
+            CreateUserDto {
+                username: format!("quhao{user_index}"),
+                password: format!("quhao{user_index}"),
+                display_name: format!("Qu Hao {user_index}"),
+                labels: random_labels,
+            },
+        )
+        .await?;
+
+        for b in 0..seed_blog_per_user_number {
+            let random_labels =
+                Self::generate_random_labels(label_per_seed_number, seed_label_number).await;
+            let blog = create_blog(
+                manager.get_connection(),
+                CreateBlogDto {
+                    title: format!("quhao{user_index} blog title {b}"),
+                    summary: format!("quhao{user_index} blog summary {b}"),
+                    labels: random_labels,
+                    username: format!("quhao{user_index}"),
+                },
+            )
+            .await?;
+            for p in 0..seed_post_per_blog_number {
+                let random_labels =
+                    Self::generate_random_labels(label_per_seed_number, seed_label_number).await;
+                create_post(
+                    manager.get_connection(),
+                    CreatePostDto {
+                        title: format!("quhao{user_index} blog {b} post title {p}"),
+                        content: format!("quhao{user_index} blog {b} post content {p}"),
+                        labels: random_labels,
+                        blog_token: blog.token.clone(),
+                    },
+                )
+                .await?;
+            }
+        }
+        Ok(())
+    }
+
+    async fn initialize_seed_data<'c>(
+        manager: &SchemaManager<'c>,
+        seed_label_number: u32,
+        seed_user_number: u32,
+        seed_blog_per_user_number: u32,
+        seed_post_per_blog_number: u32,
+        label_per_seed_number: u32,
+    ) -> Result<(), DbErr> {
+        Self::generate_seed_label(manager, seed_label_number).await?;
+
+        for user_index in 0..seed_user_number {
+            if let Err(e) = Self::generate_seed_user(
+                manager,
+                seed_label_number,
+                user_index,
+                seed_blog_per_user_number,
+                seed_post_per_blog_number,
+                label_per_seed_number,
+            )
+            .await
+            {
+                println!("Fail to generate user [{user_index}] because of error: {e:?}");
+                continue;
+            }
+            println!("Success to generate user [{user_index}] seed data.");
+        }
+
+        Ok(())
+    }
+}
+#[async_trait::async_trait]
+impl MigrationTrait for Migration {
+    async fn up(&self, manager: &SchemaManager) -> Result<(), DbErr> {
+        // Replace the sample below with your own migration scripts
+        if let Err(e) = Self::initialize_table(manager).await {
+            println!("Fail to initialize table because of error: {e:?}");
+        };
+        if let Err(e) = Self::initialize_seed_data(manager, 100, 100, 20, 20, 10).await {
+            println!("Fail to initialize seed data because of error: {e:?}");
+        };
+        Ok(())
+    }
+
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         // Replace the sample below with your own migration scripts
         manager
@@ -176,6 +294,7 @@ enum Label {
     Table,
     Id,
     Text,
+    CreateDate,
 }
 
 #[derive(DeriveIden)]

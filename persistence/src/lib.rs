@@ -1,15 +1,12 @@
 use crate::config::DatabaseConfig;
 use crate::error::DaoError;
-use migration::{Migrator, MigratorTrait};
+pub use sea_orm::DatabaseConnection;
 use sea_orm::{ConnectOptions, Database};
 use std::time::Duration;
 pub mod config;
 pub mod dao;
 pub mod dto;
 pub mod error;
-
-pub use sea_orm::DatabaseConnection;
-
 pub async fn init_database_connection(
     database_config: &DatabaseConfig,
 ) -> Result<DatabaseConnection, DaoError> {
@@ -21,7 +18,5 @@ pub async fn init_database_connection(
         database_config.connection_acquire_timeout().into(),
     ));
     let database = Database::connect(database_connect_options).await?;
-    // Migrator::down(&database, None).await?;
-    Migrator::up(&database, None).await?;
     Ok(database)
 }

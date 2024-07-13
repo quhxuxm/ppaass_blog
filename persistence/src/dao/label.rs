@@ -1,4 +1,5 @@
 use crate::error::DaoError;
+use chrono::Utc;
 use ppaass_blog_domain::entity::{LabelActiveModel, LabelColumn, LabelEntity};
 use sea_orm::ActiveValue::Set;
 use sea_orm::{
@@ -38,6 +39,7 @@ pub async fn save_label<C: ConnectionTrait + TransactionTrait>(
                 match label_from_db {
                     None => LabelActiveModel {
                         text: Set(text),
+                        create_date: Set(Utc::now()),
                         ..Default::default()
                     }
                     .save(txn)

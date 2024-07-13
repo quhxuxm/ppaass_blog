@@ -4,11 +4,11 @@ use crate::dao::PageDto;
 use crate::dto::post::{CreatePostDto, PostDto, UpdatePostDto};
 use crate::error::DaoError;
 use chrono::Utc;
-use migration::JoinType;
 use ppaass_blog_domain::entity::{
     BlogColumn, BlogEntity, PostActiveModel, PostColumn, PostEntity, PostRelation,
 };
 use sea_orm::ActiveValue::Set;
+use sea_orm::JoinType;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, IntoActiveModel, PaginatorTrait,
     QueryFilter, QuerySelect, RelationTrait, TransactionTrait, TryIntoModel,
@@ -159,3 +159,23 @@ pub async fn find_all_posts_by_blog_token<C: ConnectionTrait + TransactionTrait>
         page_index,
     })
 }
+
+// pub async fn find_all_posts_by_labels<C: ConnectionTrait + TransactionTrait>(
+//     database: &C,
+//     labels: HashSet<String>,
+//     page_index: u64,
+//     page_size: u64,
+// ) -> Result<PageDto<PostDto>, DaoError> {
+//     let mut label_text_or_condition = Condition::any();
+//     for label in labels {
+//         label_text_or_condition= label_text_or_condition.add(LabelColumn::Text.eq(label));
+//     }
+//     let label_selection = LabelEntity::find()
+//         .filter(label_text_or_condition);
+//     PostLabelEntity::find().filter(Condition::all().)
+//     LabelEntity::find()
+//         .filter(label_text_or_condition)
+//         .join(JoinType::InnerJoin, PostLabelRelation::Label.def())
+//         .join(JoinType::InnerJoin, Po);
+//     todo!()
+// }

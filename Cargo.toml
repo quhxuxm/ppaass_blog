@@ -22,3 +22,4 @@ uuid = { version = "1.9.1", features = ["v4"] }
 tower = "0.4.13"
 jsonwebtoken = "9.3.0"
 thiserror = "1.0.61"
+rand = "0.8.5"

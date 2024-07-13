@@ -1,3 +1,5 @@
+use chrono::DateTime;
+use chrono::Utc;
 use sea_orm::prelude::*;
 #[derive(DeriveEntityModel, Clone, PartialEq, Eq, Debug)]
 #[sea_orm(table_name = "label")]
@@ -6,6 +8,8 @@ pub struct Model {
     pub id: u32,
     #[sea_orm(unique, indexed)]
     pub text: String,
+    #[sea_orm(column_type = "Timestamp")]
+    pub create_date: DateTime<Utc>,
 }
 
 #[derive(EnumIter, DeriveRelation, Debug, Clone, Copy)]

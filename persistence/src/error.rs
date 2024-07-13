@@ -1,5 +1,5 @@
-use migration::sea_orm::TransactionError;
 use sea_orm::error::DbErr;
+use sea_orm::TransactionError;
 use thiserror::Error;
 #[derive(Error, Debug)]
 pub enum DaoError {

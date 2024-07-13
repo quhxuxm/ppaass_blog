@@ -11,4 +11,3 @@ sea-orm = { workspace = true }
 uuid = { workspace = true }
 serde = { workspace = true }
 ppaass-blog-domain = { path = "../domain" }
-ppaass-blog-migration = { path = "../migration" }

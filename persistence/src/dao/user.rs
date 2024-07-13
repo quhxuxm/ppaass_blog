@@ -3,12 +3,12 @@ use crate::dao::user_label::{find_labels_by_user, save_user_label};
 use crate::dto::user::{CreateUserDto, UpdateUserDto, UserDto};
 use crate::error::DaoError;
 use chrono::Utc;
-use migration::sea_orm::{
+use ppaass_blog_domain::entity::{UserActiveModel, UserColumn, UserEntity};
+use sea_orm::ConnectionTrait;
+use sea_orm::{
     ActiveModelTrait, ColumnTrait, EntityTrait, IntoActiveModel, QueryFilter, Set,
     TransactionTrait, TryIntoModel,
 };
-use ppaass_blog_domain::entity::{UserActiveModel, UserColumn, UserEntity};
-use sea_orm::ConnectionTrait;
 pub async fn find_by_username<C: ConnectionTrait + TransactionTrait>(
     database: &C,
     username: &str,
