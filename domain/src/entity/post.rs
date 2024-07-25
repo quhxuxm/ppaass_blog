@@ -8,6 +8,7 @@ pub struct Model {
     #[sea_orm(unique, indexed)]
     pub token: String,
     pub title: String,
+    pub summary: String,
     pub content: String,
     pub blog_id: u32,
     #[sea_orm(column_type = "Timestamp")]

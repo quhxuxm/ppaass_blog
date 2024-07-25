@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 pub struct CreatePostDto {
     pub title: String,
+    pub summary: String,
     pub content: String,
     pub labels: Vec<String>,
     pub blog_token: String,

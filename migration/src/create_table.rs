@@ -1,3 +1,4 @@
+use sea_orm_migration::prelude::*;
 use ppaass_blog_persistence::dao::blog::create_blog;
 use ppaass_blog_persistence::dao::label::save_label;
 use ppaass_blog_persistence::dao::post::create_post;
@@ -5,7 +6,6 @@ use ppaass_blog_persistence::dao::user::create_user;
 use ppaass_blog_persistence::dto::blog::CreateBlogDto;
 use ppaass_blog_persistence::dto::post::CreatePostDto;
 use ppaass_blog_persistence::dto::user::CreateUserDto;
-use sea_orm_migration::prelude::*;
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 
@@ -23,7 +23,13 @@ impl Migration {
                             .not_null()
                             .auto_increment(),
                     )
-                    .col(ColumnDef::new(Label::Text).string().unique_key().not_null())
+                    .col(
+                        ColumnDef::new(Label::Text)
+                            .string()
+                            .unique_key()
+                            .not_null()
+                            .string_len(8),
+                    )
                     .col(ColumnDef::new(Label::CreateDate).date_time().not_null())
                     .to_owned(),
             )
@@ -44,15 +50,22 @@ impl Migration {
                         ColumnDef::new(User::Username)
                             .string()
                             .not_null()
-                            .unique_key(),
+                            .unique_key()
+                            .string_len(16),
                     )
                     .col(
                         ColumnDef::new(User::DisplayName)
                             .string()
                             .not_null()
-                            .unique_key(),
+                            .unique_key()
+                            .string_len(16),
                     )
-                    .col(ColumnDef::new(User::Password).string().not_null())
+                    .col(
+                        ColumnDef::new(User::Password)
+                            .string()
+                            .not_null()
+                            .string_len(32),
+                    )
                     .col(ColumnDef::new(User::RegisterDate).date_time().not_null())
                     .to_owned(),
             )
@@ -85,9 +98,20 @@ impl Migration {
                             .not_null()
                             .auto_increment(),
                     )
-                    .col(ColumnDef::new(Blog::Token).string().unique_key().not_null())
-                    .col(ColumnDef::new(Blog::Title).string().not_null())
-                    .col(ColumnDef::new(Blog::Summary).string())
+                    .col(
+                        ColumnDef::new(Blog::Token)
+                            .string()
+                            .unique_key()
+                            .not_null()
+                            .string_len(256),
+                    )
+                    .col(
+                        ColumnDef::new(Blog::Title)
+                            .string()
+                            .not_null()
+                            .string_len(32),
+                    )
+                    .col(ColumnDef::new(Blog::Summary).string().string_len(256))
                     .col(ColumnDef::new(Blog::CreateDate).date_time().not_null())
                     .col(ColumnDef::new(Blog::UpdateDate).date_time().not_null())
                     .col(ColumnDef::new(Blog::UserId).big_unsigned().not_null())
@@ -122,9 +146,31 @@ impl Migration {
                             .not_null()
                             .auto_increment(),
                     )
-                    .col(ColumnDef::new(Post::Title).string().not_null())
-                    .col(ColumnDef::new(Post::Token).string().not_null().unique_key())
-                    .col(ColumnDef::new(Post::Content).string())
+                    .col(
+                        ColumnDef::new(Post::Title)
+                            .string()
+                            .not_null()
+                            .string_len(32),
+                    )
+                    .col(
+                        ColumnDef::new(Post::Summary)
+                            .string()
+                            .not_null()
+                            .string_len(256),
+                    )
+                    .col(
+                        ColumnDef::new(Post::Token)
+                            .string()
+                            .not_null()
+                            .unique_key()
+                            .string_len(256),
+                    )
+                    .col(
+                        ColumnDef::new(Post::Content)
+                            .string()
+                            .not_null()
+                            .string_len(4096),
+                    )
                     .col(ColumnDef::new(Post::CreateDate).date_time().not_null())
                     .col(ColumnDef::new(Post::UpdateDate).date_time().not_null())
                     .col(ColumnDef::new(Post::BlogId).big_unsigned().not_null())
@@ -209,6 +255,7 @@ impl Migration {
                     CreatePostDto {
                         title: format!("quhao{user_index} blog {b} post title {p}"),
                         content: format!("quhao{user_index} blog {b} post content {p}"),
+                        summary: format!("quhao{user_index} blog {b} post summary {p}"),
                         labels: random_labels,
                         blog_token: blog.token.clone(),
                     },
@@ -245,7 +292,6 @@ impl Migration {
             }
             println!("Success to generate user [{user_index}] seed data.");
         }
-
         Ok(())
     }
 }
@@ -341,6 +387,7 @@ enum Post {
     Id,
     Token,
     Title,
+    Summary,
     Content,
     BlogId,
     CreateDate,

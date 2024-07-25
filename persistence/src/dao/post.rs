@@ -1,23 +1,24 @@
-use crate::dao::label::save_all_label;
-use crate::dao::post_label::{find_labels_by_post, save_post_label};
-use crate::dao::PageDto;
-use crate::dto::post::{CreatePostDto, PostDto, UpdatePostDto};
-use crate::error::DaoError;
 use chrono::Utc;
-use ppaass_blog_domain::entity::{
-    BlogColumn, BlogEntity, PostActiveModel, PostColumn, PostEntity, PostRelation,
-};
-use sea_orm::ActiveValue::Set;
-use sea_orm::JoinType;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, IntoActiveModel, PaginatorTrait,
     QueryFilter, QuerySelect, RelationTrait, TransactionTrait, TryIntoModel,
 };
+use sea_orm::ActiveValue::Set;
+use sea_orm::JoinType;
 use uuid::Uuid;
+use ppaass_blog_domain::entity::{
+    BlogColumn, BlogEntity, PostActiveModel, PostColumn, PostEntity, PostRelation,
+};
+use crate::dao::label::save_all_label;
+use crate::dao::PageDto;
+use crate::dao::post_label::{find_labels_by_post, save_post_label};
+use crate::dto::post::{CreatePostDto, PostDto, UpdatePostDto};
+use crate::error::DaoError;
 pub async fn create_post<C: ConnectionTrait + TransactionTrait>(
     database: &C,
     CreatePostDto {
         title,
+        summary,
         content,
         labels,
         blog_token,
@@ -36,6 +37,7 @@ pub async fn create_post<C: ConnectionTrait + TransactionTrait>(
                 let post_to_db = PostActiveModel {
                     token: Set(Uuid::new_v4().to_string()),
                     title: Set(title),
+                    summary: Set(summary),
                     content: Set(content),
                     blog_id: Set(blog_from_db.id),
                     create_date: Set(Utc::now()),
