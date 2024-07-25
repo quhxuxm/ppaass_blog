@@ -199,7 +199,7 @@ impl Migration {
     async fn generate_random_labels(number: u32, total_label_number: u32) -> Vec<String> {
         let mut random_labels = Vec::new();
         for _ in 0..number {
-            let random_label = format!("Label {}", rand::random::<u32>() % total_label_number);
+            let random_label = format!("LB{}", rand::random::<u32>() % total_label_number);
             random_labels.push(random_label);
         }
         random_labels
@@ -209,7 +209,7 @@ impl Migration {
         seed_label_number: u32,
     ) -> Result<(), DbErr> {
         for i in 0..seed_label_number {
-            save_label(manager.get_connection(), format!("Label {i}")).await?;
+            save_label(manager.get_connection(), format!("LB{i}")).await?;
         }
         Ok(())
     }

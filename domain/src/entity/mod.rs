@@ -1,3 +1,4 @@
+use sea_orm::Iden;
 // The definition of blog
 pub use blog::ActiveModel as BlogActiveModel;
 pub use blog::Column as BlogColumn;

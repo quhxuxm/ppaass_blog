@@ -1,14 +1,14 @@
-use crate::error::DaoError;
 use chrono::Utc;
-use ppaass_blog_domain::entity::{
-    LabelEntity, PostLabelActiveModel, PostLabelColumn, PostLabelEntity,
-};
-use sea_orm::ActiveValue::Set;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, TransactionTrait,
     TryIntoModel,
 };
-pub async fn find_labels_by_post<C: ConnectionTrait + TransactionTrait>(
+use sea_orm::ActiveValue::Set;
+use ppaass_blog_domain::entity::{
+    LabelEntity, PostLabelActiveModel, PostLabelColumn, PostLabelEntity,
+};
+use crate::error::DaoError;
+pub async fn find_labels_by_post<C: ConnectionTrait>(
     database: &C,
     post_id: u32,
 ) -> Result<Vec<String>, DaoError> {

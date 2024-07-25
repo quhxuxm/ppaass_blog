@@ -1,13 +1,15 @@
 use chrono::Utc;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, IntoActiveModel, PaginatorTrait,
-    QueryFilter, QuerySelect, RelationTrait, TransactionTrait, TryIntoModel,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, IntoActiveModel,
+    PaginatorTrait, QueryFilter, QuerySelect, RelationTrait, TransactionTrait, TryIntoModel,
 };
 use sea_orm::ActiveValue::Set;
 use sea_orm::JoinType;
+use sea_orm::sea_query::{Alias, Expr, Query};
 use uuid::Uuid;
 use ppaass_blog_domain::entity::{
-    BlogColumn, BlogEntity, PostActiveModel, PostColumn, PostEntity, PostRelation,
+    BlogColumn, BlogEntity, LabelColumn, LabelEntity, PostActiveModel, PostColumn, PostEntity,
+    PostLabelColumn, PostLabelEntity, PostRelation,
 };
 use crate::dao::label::save_all_label;
 use crate::dao::PageDto;
@@ -59,7 +61,7 @@ pub async fn create_post<C: ConnectionTrait + TransactionTrait>(
         token: post_from_db.token,
         title: post_from_db.title,
         content: post_from_db.content,
-        labels: labels_clone,
+        summary: post_from_db.summary,
         blog_token: blog_token_clone,
         create_date: post_from_db.create_date,
         update_date: post_from_db.update_date,
@@ -120,14 +122,14 @@ pub async fn update_post<C: ConnectionTrait + TransactionTrait>(
         token: post_from_db.token,
         title: post_from_db.title,
         content: post_from_db.content,
-        labels,
+        summary: post_from_db.summary,
         blog_token,
         create_date: post_from_db.create_date,
         update_date: post_from_db.update_date,
     })
 }
 
-pub async fn find_all_posts_by_blog_token<C: ConnectionTrait + TransactionTrait>(
+pub async fn find_all_posts_by_blog_token<C: ConnectionTrait>(
     database: &C,
     blog_token: String,
     page_index: u64,
@@ -146,10 +148,10 @@ pub async fn find_all_posts_by_blog_token<C: ConnectionTrait + TransactionTrait>
             token: post.token,
             title: post.title,
             content: post.content,
-            labels,
             blog_token: blog_token.clone(),
             create_date: post.create_date,
             update_date: post.update_date,
+            summary: post.summary,
         };
         post_dto_list.push(post_dto);
     }
@@ -162,22 +164,49 @@ pub async fn find_all_posts_by_blog_token<C: ConnectionTrait + TransactionTrait>
     })
 }
 
-// pub async fn find_all_posts_by_labels<C: ConnectionTrait + TransactionTrait>(
-//     database: &C,
-//     labels: HashSet<String>,
-//     page_index: u64,
-//     page_size: u64,
-// ) -> Result<PageDto<PostDto>, DaoError> {
-//     let mut label_text_or_condition = Condition::any();
-//     for label in labels {
-//         label_text_or_condition= label_text_or_condition.add(LabelColumn::Text.eq(label));
-//     }
-//     let label_selection = LabelEntity::find()
-//         .filter(label_text_or_condition);
-//     PostLabelEntity::find().filter(Condition::all().)
-//     LabelEntity::find()
-//         .filter(label_text_or_condition)
-//         .join(JoinType::InnerJoin, PostLabelRelation::Label.def())
-//         .join(JoinType::InnerJoin, Po);
-//     todo!()
-// }
+pub async fn find_all_posts_by_labels<C: ConnectionTrait>(
+    database: &C,
+    labels: Vec<String>,
+    page_index: u64,
+    page_size: u64,
+) -> Result<PageDto<PostDto>, DaoError> {
+    let final_posts_by_labels_query_statement = Query::select()
+        .column((PostEntity, PostColumn::Token))
+        .column((PostEntity, PostColumn::Title))
+        .column((PostEntity, PostColumn::Summary))
+        .column((PostEntity, PostColumn::Content))
+        .column((PostEntity, PostColumn::CreateDate))
+        .column((PostEntity, PostColumn::UpdateDate))
+        .expr_as(
+            Expr::col((BlogEntity, BlogColumn::Token)),
+            Alias::new("blog_token".to_string()),
+        )
+        .from(PostEntity)
+        .from(LabelEntity)
+        .from(PostLabelEntity)
+        .from(BlogEntity)
+        .and_where(
+            Expr::col((PostEntity, PostColumn::Id))
+                .equals((PostLabelEntity, PostLabelColumn::PostId)),
+        )
+        .and_where(
+            Expr::col((LabelEntity, LabelColumn::Id))
+                .equals((PostLabelEntity, PostLabelColumn::LabelId)),
+        )
+        .and_where(Expr::col((PostEntity, PostColumn::BlogId)).equals((BlogEntity, BlogColumn::Id)))
+        .and_where(Expr::col((LabelEntity, LabelColumn::Text)).is_in(labels))
+        .to_owned();
+
+    let database_backend = database.get_database_backend();
+    let result_paginate =
+        PostDto::find_by_statement(database_backend.build(&final_posts_by_labels_query_statement))
+            .paginate(database, page_size);
+    let page_number = result_paginate.num_pages().await?;
+    let result_page = result_paginate.fetch_page(page_index).await?;
+    Ok(PageDto {
+        items: result_page,
+        page_size,
+        page_number,
+        page_index,
+    })
+}

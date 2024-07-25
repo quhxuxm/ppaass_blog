@@ -1,21 +1,21 @@
-use crate::config::{Config, LogConfig};
-use crate::extractor::auth_token::UserAuthToken;
-use crate::state::ApplicationState;
-use anyhow::{Ok, Result};
-use axum::middleware::from_extractor_with_state;
-use axum::routing::{get, post};
-use axum::Router;
-use ppaass_blog_persistence::{init_database_connection, DatabaseConnection};
 use std::fs::read_to_string;
 use std::path::Path;
 use std::str::FromStr;
+use anyhow::{Ok, Result};
+use axum::middleware::from_extractor_with_state;
+use axum::Router;
+use axum::routing::{get, post};
 use tokio::net::TcpListener;
 use tracing::info;
 use tracing::level_filters::LevelFilter;
 use tracing_appender::non_blocking::{NonBlocking, WorkerGuard};
 use tracing_subscriber::fmt::format::{DefaultFields, Format, Full};
-use tracing_subscriber::fmt::time::ChronoUtc;
 use tracing_subscriber::fmt::Subscriber;
+use tracing_subscriber::fmt::time::ChronoUtc;
+use ppaass_blog_persistence::{DatabaseConnection, init_database_connection};
+use crate::config::{Config, LogConfig};
+use crate::extractor::auth_token::UserAuthToken;
+use crate::state::ApplicationState;
 mod bo;
 mod config;
 mod error;
@@ -60,6 +60,10 @@ fn init_router(database: DatabaseConnection, config: Config) -> Router {
         .route("/blog/:blog_token", get(handler::blog::get_blog_detail))
         .route("/blog/list/:username", get(handler::blog::list_blogs))
         .route("/post/list/:blog_token", get(handler::post::list_posts))
+        .route(
+            "/post/list/labels",
+            get(handler::post::list_posts_by_labels),
+        )
         .with_state(state)
 }
 

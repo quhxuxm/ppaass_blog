@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use sea_orm::prelude::*;
+use crate::entity::{BlogEntity, LabelEntity, PostLabelRelation};
 #[derive(Clone, PartialEq, Eq, Debug, DeriveEntityModel)]
 #[sea_orm(table_name = "post")]
 pub struct Model {
@@ -27,9 +28,18 @@ pub enum Relation {
     Blog,
 }
 
-impl Related<super::blog::Entity> for Entity {
+impl Related<BlogEntity> for Entity {
     fn to() -> RelationDef {
         Relation::Blog.def()
+    }
+}
+
+impl Related<LabelEntity> for Entity {
+    fn to() -> RelationDef {
+        PostLabelRelation::Label.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(PostLabelRelation::Post.def().rev())
     }
 }
 
