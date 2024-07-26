@@ -1,10 +1,12 @@
 use chrono::Utc;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, FromQueryResult, IntoActiveModel,
-    PaginatorTrait, QueryFilter, QuerySelect, RelationTrait, TransactionTrait, TryIntoModel,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, DynIden, EntityTrait, FromQueryResult,
+    IntoActiveModel, PaginatorTrait, QueryFilter, QuerySelect, RelationTrait, TransactionTrait,
+    TryIntoModel,
 };
 use sea_orm::ActiveValue::Set;
 use sea_orm::JoinType;
+use sea_orm::prelude::SeaRc;
 use sea_orm::sea_query::{Alias, Expr, Query};
 use uuid::Uuid;
 use ppaass_blog_domain::entity::{
@@ -170,33 +172,66 @@ pub async fn find_all_posts_by_labels<C: ConnectionTrait>(
     page_index: u64,
     page_size: u64,
 ) -> Result<PageDto<PostDto>, DaoError> {
-    let final_posts_by_labels_query_statement = Query::select()
-        .column((PostEntity, PostColumn::Token))
-        .column((PostEntity, PostColumn::Title))
-        .column((PostEntity, PostColumn::Summary))
-        .column((PostEntity, PostColumn::Content))
-        .column((PostEntity, PostColumn::CreateDate))
-        .column((PostEntity, PostColumn::UpdateDate))
+    let post_table: DynIden = SeaRc::new(Alias::new("P"));
+    let post_label_table: DynIden = SeaRc::new(Alias::new("PL"));
+    let label_table: DynIden = SeaRc::new(Alias::new("L"));
+    let mut final_posts_by_labels_query_statement = Query::select()
+        .column((post_table.clone(), PostColumn::Token))
+        .column((post_table.clone(), PostColumn::Title))
+        .column((post_table.clone(), PostColumn::Summary))
+        .column((post_table.clone(), PostColumn::Content))
+        .column((post_table.clone(), PostColumn::CreateDate))
+        .column((post_table.clone(), PostColumn::UpdateDate))
         .expr_as(
             Expr::col((BlogEntity, BlogColumn::Token)),
             Alias::new("blog_token".to_string()),
         )
-        .from(PostEntity)
-        .from(LabelEntity)
-        .from(PostLabelEntity)
+        .from_as(PostEntity, post_table.clone())
+        .from_as(LabelEntity, label_table.clone())
+        .from_as(PostLabelEntity, post_label_table.clone())
         .from(BlogEntity)
         .and_where(
-            Expr::col((PostEntity, PostColumn::Id))
-                .equals((PostLabelEntity, PostLabelColumn::PostId)),
+            Expr::col((post_table.clone(), PostColumn::Id))
+                .equals((post_label_table.clone(), PostLabelColumn::PostId)),
         )
         .and_where(
-            Expr::col((LabelEntity, LabelColumn::Id))
-                .equals((PostLabelEntity, PostLabelColumn::LabelId)),
+            Expr::col((label_table.clone(), LabelColumn::Id))
+                .equals((post_label_table.clone(), PostLabelColumn::LabelId)),
         )
-        .and_where(Expr::col((PostEntity, PostColumn::BlogId)).equals((BlogEntity, BlogColumn::Id)))
-        .and_where(Expr::col((LabelEntity, LabelColumn::Text)).is_in(labels))
+        .and_where(
+            Expr::col((post_table.clone(), PostColumn::BlogId))
+                .equals((BlogEntity, BlogColumn::Id)),
+        )
+        .and_where(Expr::col((label_table.clone(), LabelColumn::Text)).is_in(labels.clone()))
         .to_owned();
+    labels.into_iter().for_each(|label| {
+        final_posts_by_labels_query_statement.and_where(Expr::exists(
+            Query::select()
+                .expr(Expr::val(1))
+                .from(PostEntity)
+                .from(LabelEntity)
+                .from(PostLabelEntity)
+                .and_where(
+                    Expr::col((PostLabelEntity, PostLabelColumn::LabelId))
+                        .equals((LabelEntity, LabelColumn::Id)),
+                )
+                .and_where(Expr::col((LabelEntity, LabelColumn::Text)).eq(label))
+                .and_where(
+                    Expr::col((PostLabelEntity, PostLabelColumn::PostId))
+                        .equals((PostEntity, PostColumn::Id)),
+                )
+                .and_where(
+                    Expr::col((PostEntity, PostColumn::Id))
+                        .equals((post_table.clone(), PostColumn::Id)),
+                )
+                .to_owned(),
+        ));
+    });
 
+    let final_posts_by_labels_query_statement = final_posts_by_labels_query_statement
+        .add_group_by([Expr::col((post_table.clone(), PostColumn::Token)).into()])
+        .and_having(Expr::expr(Expr::col((post_table.clone(), PostColumn::Token)).count()).gt(1))
+        .to_owned();
     let database_backend = database.get_database_backend();
     let result_paginate =
         PostDto::find_by_statement(database_backend.build(&final_posts_by_labels_query_statement))
