@@ -172,6 +172,44 @@ pub async fn find_all_posts_by_labels<C: ConnectionTrait>(
     page_index: u64,
     page_size: u64,
 ) -> Result<PageDto<PostDto>, DaoError> {
+    // Find the posts by following SQL:
+    // SELECT
+    //     P.`token`,  P.`title`,  P.`summary`,
+    //     P.`content`,  P.`create_date`,
+    //     P.`update_date`,  B.`token` AS `blog_token`
+    //  FROM  `post` as P,  `label` as L,  `post_label` as PL, blog as  B
+    //  WHERE
+    //     P.`id` =  PL.`post_id`
+    //   AND L.`id` = PL.`label_id`
+    //   AND P.`blog_id` = B.`id`
+    //   AND L.text in ('LB20','LB22')
+    //   AND
+    //     EXISTS(
+    //         SELECT 1
+    //         FROM
+    //             post_label as PL2,
+    //             post as P2,
+    //             label as L2
+    //         WHERE
+    //             PL2.label_id = L2.id
+    //         AND L2.text='LB20'
+    //         AND PL2.post_id=P2.id
+    //         AND P.id = P2.id
+    //     )
+    //   AND
+    //     EXISTS(
+    //         SELECT 1
+    //         FROM
+    //             post_label as PL2,
+    //             post as P2,
+    //             label as L2
+    //         WHERE
+    //             PL2.label_id = L2.id
+    //           AND L2.text='LB22'
+    //           AND PL2.post_id=P2.id
+    //           AND P.id = P2.id
+    //     )
+    //  GROUP BY P.token HAVING count(P.token)> 1;
     let post_table: DynIden = SeaRc::new(Alias::new("P"));
     let post_label_table: DynIden = SeaRc::new(Alias::new("PL"));
     let label_table: DynIden = SeaRc::new(Alias::new("L"));
