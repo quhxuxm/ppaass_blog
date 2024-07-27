@@ -62,5 +62,5 @@ GET http://localhost:9090/post/list/4e4f5b2a-fe13-4307-80ea-81f34553170f
 Content-Type: application/json
 
 ###
-GET http://localhost:9090/post/list/labels?labels=LB1&labels=LB2&labels=LB3&page_index=0&page_size=10
+GET http://localhost:9090/post/list/labels?labels=LB1&labels=LB2&labels=LB3&labels=LB20&page_index=0&page_size=10
 Content-Type: application/json

@@ -15,7 +15,7 @@ use ppaass_blog_domain::entity::{
 };
 use crate::dao::label::save_all_label;
 use crate::dao::PageDto;
-use crate::dao::post_label::{find_labels_by_post, save_post_label};
+use crate::dao::post_label::save_post_label;
 use crate::dto::post::{CreatePostDto, PostDto, UpdatePostDto};
 use crate::error::DaoError;
 pub async fn create_post<C: ConnectionTrait + TransactionTrait>(
@@ -28,7 +28,6 @@ pub async fn create_post<C: ConnectionTrait + TransactionTrait>(
         blog_token,
     }: CreatePostDto,
 ) -> Result<PostDto, DaoError> {
-    let labels_clone = labels.clone();
     let blog_token_clone = blog_token.clone();
     let post_from_db = database
         .transaction(|txn| {
@@ -119,7 +118,6 @@ pub async fn update_post<C: ConnectionTrait + TransactionTrait>(
             })
         })
         .await?;
-    let labels = find_labels_by_post(database, post_from_db.id).await?;
     Ok(PostDto {
         token: post_from_db.token,
         title: post_from_db.title,
@@ -145,7 +143,6 @@ pub async fn find_all_posts_by_blog_token<C: ConnectionTrait>(
     let posts = post_page.fetch_page(page_index).await?;
     let mut post_dto_list = Vec::new();
     for post in posts {
-        let labels = find_labels_by_post(database, post.id).await?;
         let post_dto = PostDto {
             token: post.token,
             title: post.title,
@@ -168,7 +165,7 @@ pub async fn find_all_posts_by_blog_token<C: ConnectionTrait>(
 
 pub async fn find_all_posts_by_labels<C: ConnectionTrait>(
     database: &C,
-    labels: Vec<String>,
+    labels: &[String],
     page_index: u64,
     page_size: u64,
 ) -> Result<PageDto<PostDto>, DaoError> {
@@ -240,9 +237,9 @@ pub async fn find_all_posts_by_labels<C: ConnectionTrait>(
             Expr::col((post_table.clone(), PostColumn::BlogId))
                 .equals((BlogEntity, BlogColumn::Id)),
         )
-        .and_where(Expr::col((label_table.clone(), LabelColumn::Text)).is_in(labels.clone()))
+        .and_where(Expr::col((label_table.clone(), LabelColumn::Text)).is_in(labels))
         .to_owned();
-    labels.into_iter().for_each(|label| {
+    labels.iter().for_each(|label| {
         final_posts_by_labels_query_statement.and_where(Expr::exists(
             Query::select()
                 .expr(Expr::val(1))

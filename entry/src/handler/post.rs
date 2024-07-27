@@ -90,7 +90,7 @@ pub async fn list_posts_by_labels(
     let page_index = page_index.unwrap_or(0u64);
     let page_size = page_size.unwrap_or(u64::MAX);
     let post_page =
-        find_all_posts_by_labels(state.database(), labels, page_index, page_size).await?;
+        find_all_posts_by_labels(state.database(), &labels, page_index, page_size).await?;
     let posts = post_page
         .items
         .into_iter()
@@ -99,7 +99,7 @@ pub async fn list_posts_by_labels(
             title: post.title,
             summary: post.summary,
             content: post.content,
-            labels: vec![],
+            labels: labels.clone(),
             blog_token: post.blog_token,
         })
         .collect();
